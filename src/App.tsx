@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Minus, X, Divide, RefreshCw, Delete, Timer, Play, Moon, Sun, Plane, Music, Film, Train, Ticket, Bus, TramFront, CableCar } from 'lucide-react';
+import { Plus, Minus, X, Divide, RefreshCw, Delete, Timer, Play, Moon, Sun, Plane, Music, Film, Train, Ticket, Bus, TramFront, CableCar, Star, CreditCard, Coins } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 function calculateResult(digits: string[], gaps: string[]): number {
@@ -24,7 +24,10 @@ function calculateResult(digits: string[], gaps: string[]): number {
     if (/[^0-9+\-*/().\s]/.test(expr)) return NaN;
 
     const result = new Function(`"use strict"; return (${expr})`)();
-    return typeof result === 'number' ? result : NaN;
+    // Ensure the result is exactly 100 without floating point inaccuracies
+    if (typeof result !== 'number' || isNaN(result)) return NaN;
+    // Round to 10 decimal places to handle JS floating point math, but require exact 100
+    return Math.round(result * 10000000000) / 10000000000;
   } catch (e) {
     return NaN;
   }
@@ -41,7 +44,7 @@ function hasSolution(digits: string[]): boolean {
     }
     currentOps.push('');
     let res = calculateResult(digits, currentOps);
-    if (Math.abs(res - 100) < 0.0001) return true;
+    if (res === 100) return true;
   }
   return false;
 }
@@ -69,11 +72,6 @@ const CAR_IMAGES = [
     // Red sports car
     url: 'https://images.pexels.com/photos/210019/pexels-photo-210019.jpeg?auto=compress&cs=tinysrgb&w=1200', 
     top: '72%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // White car
-    url: 'https://images.pexels.com/photos/3729464/pexels-photo-3729464.jpeg?auto=compress&cs=tinysrgb&w=1200', 
-    top: '75%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
   },
   {
     // Lamborghini
@@ -104,6 +102,21 @@ const CAR_IMAGES = [
     // Red Mustang
     url: 'https://images.pexels.com/photos/3311574/pexels-photo-3311574.jpeg?auto=compress&cs=tinysrgb&w=1200',
     top: '82%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
+  },
+  {
+    // Yellow Camaro
+    url: 'https://images.pexels.com/photos/120049/pexels-photo-120049.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    top: '75%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
+  },
+  {
+    // Silver Mercedes
+    url: 'https://images.pexels.com/photos/112452/pexels-photo-112452.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    top: '78%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
+  },
+  {
+    // Vintage Beetle
+    url: 'https://images.pexels.com/photos/5046305/pexels-photo-5046305.jpeg?auto=compress&cs=tinysrgb&w=1200',
+    top: '88%', left: '50%', baseScale: 0.45, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
   }
 ];
 
@@ -219,8 +232,167 @@ const TICKET_STYLES = [
     footerClass: 'text-[#2f3e33] font-serif font-bold uppercase text-[9px] sm:text-[10px] tracking-widest',
     hasBarcode: false,
     pattern: 'none'
+  },
+  {
+    id: 'golden-ticket',
+    containerClass: 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-lg shadow-[0_0_40px_rgba(234,179,8,0.5)] p-5 sm:p-6 border-4 border-yellow-200 relative overflow-hidden',
+    icon: Star,
+    iconClass: 'text-yellow-100',
+    title: 'GOLDEN TICKET',
+    subtitle: 'LUCKY WINNER',
+    labelClass: 'text-yellow-900 font-serif font-black uppercase tracking-widest text-xs',
+    numberContainerClass: 'border-y-4 border-double border-yellow-700/30 my-4 py-4 bg-yellow-400/20',
+    numberClass: 'text-yellow-900 font-serif tracking-[0.2em] drop-shadow-md',
+    footerLeft: 'ADMIT 1',
+    footerRight: 'FACTORY TOUR',
+    footerClass: 'text-yellow-900 font-serif font-bold uppercase text-[10px] tracking-widest',
+    hasBarcode: false,
+    pattern: 'radial-gradient(rgba(255,255,255,0.2) 2px, transparent 2px)'
+  },
+  {
+    id: 'metro-pass',
+    containerClass: 'bg-blue-600 rounded-2xl shadow-lg p-5 sm:p-6 border-2 border-blue-400 relative overflow-hidden text-white',
+    icon: CreditCard,
+    iconClass: 'text-blue-200',
+    title: 'METRO PASS',
+    subtitle: 'MONTHLY',
+    labelClass: 'text-blue-100 font-sans font-bold uppercase tracking-widest text-xs',
+    numberContainerClass: 'bg-white rounded-lg my-4 py-4 shadow-inner',
+    numberClass: 'text-blue-900 font-mono tracking-[0.2em]',
+    footerLeft: 'ZONE 1-3',
+    footerRight: 'UNLIMITED',
+    footerClass: 'text-blue-200 font-sans font-bold uppercase text-[10px] tracking-widest',
+    hasBarcode: true,
+    pattern: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px)'
+  },
+  {
+    id: 'lottery',
+    containerClass: 'bg-emerald-50 rounded-lg shadow-xl p-5 sm:p-6 border-4 border-emerald-500 relative overflow-hidden',
+    icon: Coins,
+    iconClass: 'text-emerald-600',
+    title: 'LOTTERY TICKET',
+    subtitle: 'JACKPOT',
+    labelClass: 'text-emerald-800 font-sans font-black uppercase tracking-widest text-xs',
+    numberContainerClass: 'bg-emerald-100 border-2 border-dashed border-emerald-400 rounded-full my-4 py-4',
+    numberClass: 'text-emerald-700 font-sans font-black tracking-[0.3em]',
+    footerLeft: 'DRAW DATE',
+    footerRight: 'TODAY',
+    footerClass: 'text-emerald-600 font-sans font-bold uppercase text-[10px] tracking-widest',
+    hasBarcode: true,
+    pattern: 'radial-gradient(rgba(16,185,129,0.1) 2px, transparent 2px)'
   }
 ];
+
+function DemoOverlay({ onComplete }: { onComplete: () => void }) {
+  const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    const sequence = async () => {
+      await new Promise(r => setTimeout(r, 3500));
+      if (!isMounted) return; setStep(1);
+      await new Promise(r => setTimeout(r, 4000));
+      if (!isMounted) return; setStep(2);
+      await new Promise(r => setTimeout(r, 4000));
+      if (!isMounted) return; setStep(3);
+      await new Promise(r => setTimeout(r, 4000));
+      if (!isMounted) return; setStep(4);
+    };
+    sequence();
+    return () => { isMounted = false; };
+  }, []);
+
+  const messages = [
+    "Вам даны 6 случайных цифр",
+    "Пустой промежуток объединяет их в числа",
+    "Нажимайте на квадраты и выбирайте знаки",
+    "Используйте +, -, *, / и скобки",
+    "Соберите ровно 100!"
+  ];
+
+  return (
+    <motion.div 
+      key="demo"
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[100] bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-2 sm:p-4"
+    >
+      <div className="w-full max-w-lg flex flex-col items-center">
+        <h2 className="text-2xl sm:text-3xl font-black text-white mb-6 text-center">Как играть?</h2>
+        
+        <div className="bg-zinc-900 p-4 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-800 shadow-2xl w-full flex flex-col items-center relative overflow-hidden">
+          <p className="text-zinc-400 text-center h-12 mb-4 font-medium text-sm sm:text-base px-4">
+            {messages[step]}
+          </p>
+
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1.5 text-2xl sm:text-4xl font-mono font-black text-white mb-6 h-16 w-full px-2">
+             <span>9</span>
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
+               step === 0 ? 'w-6 sm:w-10 border-zinc-700 bg-zinc-800' : 
+               'w-0 border-0 opacity-0 mx-[-2px] sm:mx-[-4px]'
+             }`}></div>
+             <span>8</span>
+             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
+               step === 2 ? 'border-orange-500 bg-orange-500/20 scale-110' : 
+               step >= 3 ? 'border-zinc-700 bg-zinc-800' : 
+               'border-zinc-700 bg-zinc-800'
+             }`}>
+                {step >= 2 && <span className="text-orange-500">+</span>}
+             </div>
+             <span>7</span>
+             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
+               step >= 3 ? 'border-zinc-700 bg-zinc-800' :
+               'border-zinc-700 bg-zinc-800'
+             }`}>
+                {step >= 3 && <span className="text-orange-500">-</span>}
+             </div>
+             <span>6</span>
+             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
+               step >= 3 ? 'border-zinc-700 bg-zinc-800' :
+               'border-zinc-700 bg-zinc-800'
+             }`}>
+                {step >= 3 && <span className="text-orange-500">+</span>}
+             </div>
+             <span>5</span>
+             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
+               step >= 3 ? 'border-zinc-700 bg-zinc-800' :
+               'border-zinc-700 bg-zinc-800'
+             }`}>
+                {step >= 3 && <span className="text-orange-500">-</span>}
+             </div>
+             <span>4</span>
+          </div>
+
+          <div className="text-4xl sm:text-6xl font-black font-mono transition-all duration-500 h-16 flex items-center justify-center">
+             {step >= 4 ? <span className="text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]">= 100</span> : <span className="text-zinc-700">= ?</span>}
+          </div>
+
+          <div className="h-16 mt-6 flex items-center justify-center w-full">
+            {step >= 4 ? (
+              <motion.div initial={{scale: 0}} animate={{scale: 1}} className="w-full">
+                <button onClick={onComplete} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)]">
+                  Играть!
+                </button>
+              </motion.div>
+            ) : (
+              <div className="flex gap-1.5 sm:gap-2 w-full justify-center opacity-60 pointer-events-none">
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><Plus size={20} className="text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><Minus size={20} className="text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><X size={20} className="text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><Divide size={20} className="text-zinc-400"/></div>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        {step < 4 && (
+          <button onClick={onComplete} className="mt-4 text-zinc-500 hover:text-zinc-300 font-bold px-6 py-2 transition-colors text-sm sm:text-base">
+            Пропустить демо
+          </button>
+        )}
+      </div>
+    </motion.div>
+  );
+}
 
 export default function App() {
   const [digits, setDigits] = useState<string[]>([]);
@@ -228,15 +400,27 @@ export default function App() {
   const [gaps, setGaps] = useState<string[]>(['', '', '', '', '', '', '']);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(1);
   const [won, setWon] = useState(false);
-  const [score, setScore] = useState(0);
   const [country, setCountry] = useState(COUNTRIES[0]);
   const [carBg, setCarBg] = useState(CAR_IMAGES[0]);
   const [ticketStyle, setTicketStyle] = useState(TICKET_STYLES[0]);
   const [elapsedTime, setElapsedTime] = useState<number>(0);
-  const [pointsEarned, setPointsEarned] = useState(0);
   const [gameState, setGameState] = useState<'idle' | 'playing'>('idle');
   const [gameMode, setGameMode] = useState<'car' | 'ticket'>('car');
   const [isTelegram, setIsTelegram] = useState(false);
+  
+  // Demo State
+  const [showDemo, setShowDemo] = useState(true);
+
+  const completeDemo = () => {
+    setShowDemo(false);
+    setGameState('playing');
+  };
+
+  // Game Statistics
+  const [solvedCount, setSolvedCount] = useState(0);
+  const [unsolvedCount, setUnsolvedCount] = useState(0);
+  const [totalSolveTime, setTotalSolveTime] = useState(0);
+  const [totalOperatorsUsed, setTotalOperatorsUsed] = useState(0);
   
   const [carWidth, setCarWidth] = useState(800);
   const carContainerRef = React.useRef<HTMLDivElement>(null);
@@ -253,7 +437,11 @@ export default function App() {
     return () => observer.disconnect();
   }, [carBg, digits, country, gameMode]);
 
-  const initGame = useCallback((startAsIdle = false) => {
+  const initGame = useCallback((startAsIdle = false, isSkip = false) => {
+    if (isSkip) {
+      setUnsolvedCount(prev => prev + 1);
+    }
+    
     setDigits(generateSolvableTicket());
     
     const getRandomLetter = () => {
@@ -360,19 +548,24 @@ export default function App() {
   }, [selectedSlot, handleOp, won, initGame, gameState]);
 
   const currentResult = digits.length ? calculateResult(digits, gaps) : 0;
-  const isWin = Math.abs(currentResult - 100) < 0.0001;
+  const isWin = currentResult === 100;
 
   useEffect(() => {
     if (isWin && !won) {
       setWon(true);
       setGameState('idle');
-      // Base score 500, subtract 5 points per second taken, minimum 50 points
-      const calculatedPoints = Math.max(50, 500 - (elapsedTime * 5));
-      setPointsEarned(calculatedPoints);
-      setScore(s => s + calculatedPoints);
+      
+      // Update statistics
+      setSolvedCount(prev => prev + 1);
+      setTotalSolveTime(prev => prev + elapsedTime);
+      
+      // Count operators used in the winning solution
+      const operatorsUsed = gaps.join('').replace(/[0-9.]/g, '').length;
+      setTotalOperatorsUsed(prev => prev + operatorsUsed);
+      
       setSelectedSlot(null);
     }
-  }, [isWin, won, elapsedTime]);
+  }, [isWin, won, elapsedTime, gaps]);
 
   if (!digits.length) return null;
 
@@ -462,14 +655,29 @@ export default function App() {
          </div>
 
          <div className="flex gap-2 sm:gap-3">
-           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex items-center gap-2 shadow-sm">
-              <Timer className="w-4 h-4 text-zinc-400" />
+           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem]">
+              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Решено</span>
+              <span className="font-mono text-base sm:text-lg font-bold text-green-400">{solvedCount}</span>
+           </div>
+           
+           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem]">
+              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Пропущено</span>
+              <span className="font-mono text-base sm:text-lg font-bold text-red-400">{unsolvedCount}</span>
+           </div>
+
+           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] hidden sm:flex">
+              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Знаков</span>
+              <span className="font-mono text-base sm:text-lg font-bold text-blue-400">{totalOperatorsUsed}</span>
+           </div>
+
+           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem]">
+              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Текущее</span>
               <span className="font-mono text-base sm:text-lg font-bold text-zinc-200">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span>
            </div>
 
-           <div className="bg-zinc-100/90 backdrop-blur-md px-4 sm:px-5 py-2 rounded-2xl flex items-center gap-2 sm:gap-3 shadow-md border border-black/10">
-              <span className="text-zinc-500 text-[10px] sm:text-xs font-bold uppercase tracking-widest hidden sm:inline">Очки</span>
-              <span className="font-mono text-lg sm:text-xl font-black text-zinc-900">{score}</span>
+           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] hidden sm:flex">
+              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Общее</span>
+              <span className="font-mono text-base sm:text-lg font-bold text-zinc-200">{Math.floor(totalSolveTime / 60)}:{(totalSolveTime % 60).toString().padStart(2, '0')}</span>
            </div>
          </div>
       </header>
@@ -577,17 +785,19 @@ export default function App() {
 
         {/* Skip Button */}
         <button 
-          onClick={() => initGame(false)}
+          onClick={() => initGame(false, true)}
           className="mt-2 sm:mt-4 flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-white/20 dark:border-zinc-800/50 text-white/80 dark:text-zinc-400 hover:text-white dark:hover:text-white hover:bg-white/10 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-sm sm:text-base"
         >
           <RefreshCw size={18} />
-          {gameMode === 'car' ? 'Другая машина' : 'Другой билет'}
+          {gameMode === 'car' ? 'Пропустить машину' : 'Пропустить билет'}
         </button>
       </div>
 
       {/* Modals */}
       <AnimatePresence>
-        {gameState === 'idle' && !won && (
+        {showDemo && <DemoOverlay onComplete={completeDemo} />}
+
+        {gameState === 'idle' && !won && !showDemo && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -633,8 +843,8 @@ export default function App() {
               </div>
               <h2 className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-white mb-3 tracking-tighter">Идеально!</h2>
               <div className="flex flex-col items-center gap-1 mb-8">
-                <p className="text-lg text-zinc-500 dark:text-zinc-400">Время: <span className="font-mono text-zinc-900 dark:text-white font-bold">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span></p>
-                <p className="text-2xl sm:text-3xl text-green-500 font-black">+{pointsEarned} очков</p>
+                <p className="text-lg text-zinc-500 dark:text-zinc-400">Решено за: <span className="font-mono text-zinc-900 dark:text-white font-bold">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span></p>
+                <p className="text-lg text-zinc-500 dark:text-zinc-400">Использовано знаков: <span className="font-mono text-zinc-900 dark:text-white font-bold">{gaps.join('').replace(/[0-9.]/g, '').length}</span></p>
               </div>
               <button 
                 onClick={() => initGame(false)}
