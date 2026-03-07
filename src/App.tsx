@@ -1,6 +1,421 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Plus, Minus, X, Divide, RefreshCw, Delete, Timer, Play, Moon, Sun, Plane, Music, Film, Train, Ticket, Bus, TramFront, CableCar, Star, CreditCard, Coins } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+// AI image generation removed as per user request
+
+// Start fetching immediately when the app mounts
+// Removed top-level call
+
+interface TelegramUser {
+  id: number;
+  first_name: string;
+  last_name?: string;
+  username?: string;
+  language_code?: string;
+  photo_url?: string;
+}
+
+const TRANSLATIONS = {
+  ru: {
+    title: "Make100",
+    solved: "Решено",
+    skipped: "Пропущено",
+    operators: "Знаков",
+    current: "Текущее",
+    total: "Общее",
+    theme: "Тема",
+    language: "Язык",
+    light: "Светлая",
+    dark: "Темная",
+    menu: "Меню",
+    play: "Играть!",
+    skipDemo: "Пропустить демо",
+    demoTitle: "Как играть?",
+    demo1: "Вам даны 6 случайных цифр",
+    demo2: "Пустой промежуток объединяет их в числа",
+    demo3: "Нажимайте на квадраты и выбирайте знаки",
+    demo4: "Используйте +, -, *, / и скобки",
+    demo5: "Соберите ровно 100!",
+    soundAndVibration: "Звук и вибрация",
+    sound: "Звук",
+    vibration: "Вибро",
+    tapGaps: "Нажимайте на промежутки и вставляйте знаки",
+    skipTicket: "Пропустить билет",
+    introText: "Соберите 100 из цифр на билете, используя математические знаки.",
+    start: "Старт",
+    perfect: "Идеально!",
+    solvedIn: "Решено за:",
+    operatorsUsed: "Использовано знаков:",
+    nextTicket: "Следующий билет",
+    tickets: {
+      flight: { title: 'ПОСАДОЧНЫЙ ТАЛОН', subtitle: 'ПЕРВЫЙ КЛАСС', footerLeft: 'ГЕЙТ 14', footerRight: 'МЕСТО 2А' },
+      concert: { title: 'LIVE КОНЦЕРТ', subtitle: 'VIP ДОСТУП', footerLeft: 'МИРОВОЙ ТУР', footerRight: 'РЯД 1' },
+      cinema: { title: 'БИЛЕТ В КИНО', subtitle: 'НА ОДНОГО', footerLeft: 'РЯД F', footerRight: 'МЕСТО 12' },
+      train: { title: 'ЭКСПРЕСС ПОЕЗД', subtitle: 'В ОДНУ СТОРОНУ', footerLeft: 'ПЛАТФОРМА 9', footerRight: 'ВАГОН 4' },
+      'vintage-bus': { title: 'АВТОБУСНЫЙ БИЛЕТ', subtitle: 'СЕРИЯ АВ', footerLeft: 'КОНТРОЛЬНЫЙ', footerRight: 'БИЛЕТ' },
+      'vintage-tram': { title: 'ТРАМВАЙ', subtitle: 'РАЗОВЫЙ', footerLeft: 'БЕЗ КОМПОСТЕРА', footerRight: 'НЕДЕЙСТВИТЕЛЕН' },
+      'soviet-trolleybus': { title: 'ТРОЛЛЕЙБУС', subtitle: 'ГОРТРАНС', footerLeft: 'СОХРАНЯТЬ ДО', footerRight: 'КОНЦА ПОЕЗДКИ' },
+      'golden-ticket': { title: 'ЗОЛОТОЙ БИЛЕТ', subtitle: 'СЧАСТЛИВЧИК', footerLeft: 'ПРОПУСК 1', footerRight: 'ТУР НА ФАБРИКУ' },
+      'metro-pass': { title: 'ПРОЕЗДНОЙ', subtitle: 'НА МЕСЯЦ', footerLeft: 'ЗОНА 1-3', footerRight: 'БЕЗЛИМИТ' },
+      lottery: { title: 'ЛОТЕРЕЙНЫЙ БИЛЕТ', subtitle: 'ДЖЕКПОТ', footerLeft: 'ДАТА РОЗЫГРЫША', footerRight: 'СЕГОДНЯ' }
+    }
+  },
+  en: {
+    title: "Make100",
+    solved: "Solved",
+    skipped: "Skipped",
+    operators: "Operators",
+    current: "Current",
+    total: "Total",
+    theme: "Theme",
+    language: "Language",
+    light: "Light",
+    dark: "Dark",
+    menu: "Menu",
+    play: "Play!",
+    skipDemo: "Skip demo",
+    demoTitle: "How to play?",
+    demo1: "You are given 6 random digits",
+    demo2: "An empty gap combines them into numbers",
+    demo3: "Tap the squares and choose operators",
+    demo4: "Use +, -, *, / and brackets",
+    demo5: "Make exactly 100!",
+    soundAndVibration: "Sound & Vibration",
+    sound: "Sound",
+    vibration: "Vibration",
+    tapGaps: "Tap the gaps and insert operators",
+    skipTicket: "Skip ticket",
+    introText: "Make 100 from the digits on the ticket using mathematical operators.",
+    start: "Start",
+    perfect: "Perfect!",
+    solvedIn: "Solved in:",
+    operatorsUsed: "Operators used:",
+    nextTicket: "Next ticket",
+    tickets: {
+      flight: { title: 'BOARDING PASS', subtitle: 'FIRST CLASS', footerLeft: 'GATE 14', footerRight: 'SEAT 2A' },
+      concert: { title: 'LIVE CONCERT', subtitle: 'VIP ACCESS', footerLeft: 'WORLD TOUR', footerRight: 'ROW 1' },
+      cinema: { title: 'CINEMA TICKET', subtitle: 'ADMIT ONE', footerLeft: 'ROW F', footerRight: 'SEAT 12' },
+      train: { title: 'EXPRESS TRAIN', subtitle: 'ONE WAY', footerLeft: 'PLATFORM 9', footerRight: 'CARRIAGE 4' },
+      'vintage-bus': { title: 'BUS TICKET', subtitle: 'SERIES AB', footerLeft: 'CONTROL', footerRight: 'TICKET' },
+      'vintage-tram': { title: 'TRAM', subtitle: 'SINGLE', footerLeft: 'WITHOUT PUNCH', footerRight: 'INVALID' },
+      'soviet-trolleybus': { title: 'TROLLEYBUS', subtitle: 'CITY TRANSIT', footerLeft: 'KEEP UNTIL', footerRight: 'END OF TRIP' },
+      'golden-ticket': { title: 'GOLDEN TICKET', subtitle: 'LUCKY WINNER', footerLeft: 'ADMIT 1', footerRight: 'FACTORY TOUR' },
+      'metro-pass': { title: 'METRO PASS', subtitle: 'MONTHLY', footerLeft: 'ZONE 1-3', footerRight: 'UNLIMITED' },
+      lottery: { title: 'LOTTERY TICKET', subtitle: 'JACKPOT', footerLeft: 'DRAW DATE', footerRight: 'TODAY' }
+    }
+  },
+  de: {
+    title: "Make100",
+    solved: "Gelöst",
+    skipped: "Übersprungen",
+    operators: "Zeichen",
+    current: "Aktuell",
+    total: "Gesamt",
+    theme: "Thema",
+    language: "Sprache",
+    light: "Hell",
+    dark: "Dunkel",
+    menu: "Menü",
+    play: "Spielen!",
+    skipDemo: "Demo überspringen",
+    demoTitle: "Spielanleitung?",
+    demo1: "Sie erhalten 6 zufällige Ziffern",
+    demo2: "Eine Lücke verbindet sie zu Zahlen",
+    demo3: "Tippen Sie auf Quadrate und wählen Sie Zeichen",
+    demo4: "Verwenden Sie +, -, *, / und Klammern",
+    demo5: "Erreichen Sie genau 100!",
+    soundAndVibration: "Ton & Vibration",
+    sound: "Ton",
+    vibration: "Vibration",
+    tapGaps: "Tippen Sie auf die Lücken und fügen Sie Zeichen ein",
+    skipTicket: "Ticket überspringen",
+    introText: "Erreichen Sie 100 aus den Ziffern auf dem Ticket mit mathematischen Zeichen.",
+    start: "Start",
+    perfect: "Perfekt!",
+    solvedIn: "Gelöst in:",
+    operatorsUsed: "Verwendete Zeichen:",
+    nextTicket: "Nächstes Ticket",
+    tickets: {
+      flight: { title: 'BORDKARTE', subtitle: 'ERSTE KLASSE', footerLeft: 'GATE 14', footerRight: 'SITZ 2A' },
+      concert: { title: 'LIVE-KONZERT', subtitle: 'VIP-ZUGANG', footerLeft: 'WELTTOURNEE', footerRight: 'REIHE 1' },
+      cinema: { title: 'KINOKARTE', subtitle: 'EINTRITT EINS', footerLeft: 'REIHE F', footerRight: 'SITZ 12' },
+      train: { title: 'EXPRESSZUG', subtitle: 'EINFACHE FAHRT', footerLeft: 'GLEIS 9', footerRight: 'WAGEN 4' },
+      'vintage-bus': { title: 'BUSFAHRKARTE', subtitle: 'SERIE AB', footerLeft: 'KONTROLLE', footerRight: 'TICKET' },
+      'vintage-tram': { title: 'STRASSENBAHN', subtitle: 'EINZELFAHRT', footerLeft: 'OHNE ENTWERTUNG', footerRight: 'UNGÜLTIG' },
+      'soviet-trolleybus': { title: 'OBUS', subtitle: 'STADTVERKEHR', footerLeft: 'BEHALTEN BIS', footerRight: 'FAHRTENDE' },
+      'golden-ticket': { title: 'GOLDENES TICKET', subtitle: 'GLÜCKLICHER GEWINNER', footerLeft: 'EINTRITT 1', footerRight: 'FABRIKTOUR' },
+      'metro-pass': { title: 'U-BAHN-PASS', subtitle: 'MONATLICH', footerLeft: 'ZONE 1-3', footerRight: 'UNBEGRENZT' },
+      lottery: { title: 'LOTTERIELOS', subtitle: 'JACKPOT', footerLeft: 'ZIEHUNGSDATUM', footerRight: 'HEUTE' }
+    }
+  },
+  fr: {
+    title: "Make100",
+    solved: "Résolu",
+    skipped: "Passé",
+    operators: "Signes",
+    current: "Actuel",
+    total: "Total",
+    theme: "Thème",
+    language: "Langue",
+    light: "Clair",
+    dark: "Sombre",
+    menu: "Menu",
+    play: "Jouer!",
+    skipDemo: "Passer la démo",
+    demoTitle: "Comment jouer?",
+    demo1: "Vous avez 6 chiffres aléatoires",
+    demo2: "Un espace vide les combine en nombres",
+    demo3: "Appuyez sur les carrés et choisissez les signes",
+    demo4: "Utilisez +, -, *, / et les parenthèses",
+    demo5: "Faites exactement 100!",
+    soundAndVibration: "Son et vibration",
+    sound: "Son",
+    vibration: "Vibration",
+    tapGaps: "Appuyez sur les espaces et insérez des signes",
+    skipTicket: "Passer le billet",
+    introText: "Faites 100 à partir des chiffres sur le billet en utilisant des signes mathématiques.",
+    start: "Démarrer",
+    perfect: "Parfait!",
+    solvedIn: "Résolu en:",
+    operatorsUsed: "Signes utilisés:",
+    nextTicket: "Billet suivant",
+    tickets: {
+      flight: { title: 'CARTE D\'EMBARQUEMENT', subtitle: 'PREMIÈRE CLASSE', footerLeft: 'PORTE 14', footerRight: 'SIÈGE 2A' },
+      concert: { title: 'CONCERT LIVE', subtitle: 'ACCÈS VIP', footerLeft: 'TOURNÉE MONDIALE', footerRight: 'RANG 1' },
+      cinema: { title: 'BILLET DE CINÉMA', subtitle: 'UNE ENTRÉE', footerLeft: 'RANG F', footerRight: 'SIÈGE 12' },
+      train: { title: 'TRAIN EXPRESS', subtitle: 'ALLER SIMPLE', footerLeft: 'QUAI 9', footerRight: 'VOITURE 4' },
+      'vintage-bus': { title: 'BILLET DE BUS', subtitle: 'SÉRIE AB', footerLeft: 'CONTRÔLE', footerRight: 'BILLET' },
+      'vintage-tram': { title: 'TRAMWAY', subtitle: 'ALLER SIMPLE', footerLeft: 'SANS COMPOSTAGE', footerRight: 'INVALIDE' },
+      'soviet-trolleybus': { title: 'TROLLEYBUS', subtitle: 'TRANSIT URBAIN', footerLeft: 'GARDER JUSQU\'À', footerRight: 'FIN DU TRAJET' },
+      'golden-ticket': { title: 'TICKET D\'OR', subtitle: 'HEUREUX GAGNANT', footerLeft: 'ENTRÉE 1', footerRight: 'VISITE D\'USINE' },
+      'metro-pass': { title: 'PASS MÉTRO', subtitle: 'MENSUEL', footerLeft: 'ZONE 1-3', footerRight: 'ILLIMITÉ' },
+      lottery: { title: 'BILLET DE LOTERIE', subtitle: 'JACKPOT', footerLeft: 'DATE DE TIRAGE', footerRight: 'AUJOURD\'HUI' }
+    }
+  },
+  pt: {
+    title: "Make100",
+    solved: "Resolvido",
+    skipped: "Pulado",
+    operators: "Sinais",
+    current: "Atual",
+    total: "Total",
+    theme: "Tema",
+    language: "Idioma",
+    light: "Claro",
+    dark: "Escuro",
+    menu: "Menu",
+    play: "Jogar!",
+    skipDemo: "Pular demo",
+    demoTitle: "Como jogar?",
+    demo1: "Você recebe 6 dígitos aleatórios",
+    demo2: "Um espaço vazio os combina em números",
+    demo3: "Toque nos quadrados e escolha os sinais",
+    demo4: "Use +, -, *, / e parênteses",
+    demo5: "Faça exatamente 100!",
+    soundAndVibration: "Som e Vibração",
+    sound: "Som",
+    vibration: "Vibração",
+    tapGaps: "Toque nos espaços e insira os sinais",
+    skipTicket: "Pular bilhete",
+    introText: "Faça 100 a partir dos dígitos no bilhete usando sinais matemáticos.",
+    start: "Iniciar",
+    perfect: "Perfeito!",
+    solvedIn: "Resolvido em:",
+    operatorsUsed: "Sinais usados:",
+    nextTicket: "Próximo bilhete",
+    tickets: {
+      flight: { title: 'CARTÃO DE EMBARQUE', subtitle: 'PRIMEIRA CLASSE', footerLeft: 'PORTÃO 14', footerRight: 'ASSENTO 2A' },
+      concert: { title: 'CONCERTO AO VIVO', subtitle: 'ACESSO VIP', footerLeft: 'TURNÊ MUNDIAL', footerRight: 'FILA 1' },
+      cinema: { title: 'BILHETE DE CINEMA', subtitle: 'UMA ENTRADA', footerLeft: 'FILA F', footerRight: 'ASSENTO 12' },
+      train: { title: 'TREM EXPRESSO', subtitle: 'SÓ IDA', footerLeft: 'PLATAFORMA 9', footerRight: 'VAGÃO 4' },
+      'vintage-bus': { title: 'BILHETE DE ÔNIBUS', subtitle: 'SÉRIE AB', footerLeft: 'CONTROLE', footerRight: 'BILHETE' },
+      'vintage-tram': { title: 'BONDE', subtitle: 'VIAGEM ÚNICA', footerLeft: 'SEM PICOTAR', footerRight: 'INVÁLIDO' },
+      'soviet-trolleybus': { title: 'TRÓLEBUS', subtitle: 'TRÂNSITO URBANO', footerLeft: 'GUARDAR ATÉ', footerRight: 'FIM DA VIAGEM' },
+      'golden-ticket': { title: 'BILHETE DOURADO', subtitle: 'VENCEDOR SORTUDO', footerLeft: 'ENTRADA 1', footerRight: 'TOUR NA FÁBRICA' },
+      'metro-pass': { title: 'PASSE DE METRÔ', subtitle: 'MENSAL', footerLeft: 'ZONA 1-3', footerRight: 'ILIMITADO' },
+      lottery: { title: 'BILHETE DE LOTERIA', subtitle: 'JACKPOT', footerLeft: 'DATA DO SORTEIO', footerRight: 'HOJE' }
+    }
+  },
+  es: {
+    title: "Make100",
+    solved: "Resuelto",
+    skipped: "Saltado",
+    operators: "Signos",
+    current: "Actual",
+    total: "Total",
+    theme: "Tema",
+    language: "Idioma",
+    light: "Claro",
+    dark: "Oscuro",
+    menu: "Menú",
+    play: "¡Jugar!",
+    skipDemo: "Saltar demo",
+    demoTitle: "¿Cómo jugar?",
+    demo1: "Tienes 6 dígitos aleatorios",
+    demo2: "Un espacio vacío los combina en números",
+    demo3: "Toca los cuadrados y elige los signos",
+    demo4: "Usa +, -, *, / y paréntesis",
+    demo5: "¡Haz exactamente 100!",
+    soundAndVibration: "Sonido y Vibración",
+    sound: "Sonido",
+    vibration: "Vibración",
+    tapGaps: "Toca los espacios e inserta los signos",
+    skipTicket: "Saltar boleto",
+    introText: "Haz 100 a partir de los dígitos en el boleto usando signos matemáticos.",
+    start: "Empezar",
+    perfect: "¡Perfecto!",
+    solvedIn: "Resuelto en:",
+    operatorsUsed: "Signos usados:",
+    nextTicket: "Siguiente boleto",
+    tickets: {
+      flight: { title: 'TARJETA DE EMBARQUE', subtitle: 'PRIMERA CLASSE', footerLeft: 'PUERTA 14', footerRight: 'ASIENTO 2A' },
+      concert: { title: 'CONCIERTO EN VIVO', subtitle: 'ACCESO VIP', footerLeft: 'GIRA MUNDIAL', footerRight: 'FILA 1' },
+      cinema: { title: 'BOLETO DE CINE', subtitle: 'UNA ENTRADA', footerLeft: 'FILA F', footerRight: 'ASIENTO 12' },
+      train: { title: 'TREN EXPRESO', subtitle: 'SOLO IDA', footerLeft: 'ANDÉN 9', footerRight: 'VAGÓN 4' },
+      'vintage-bus': { title: 'BOLETO DE AUTOBÚS', subtitle: 'SERIE AB', footerLeft: 'CONTROL', footerRight: 'BOLETO' },
+      'vintage-tram': { title: 'TRANVÍA', subtitle: 'VIAJE ÚNICO', footerLeft: 'SIN PICAR', footerRight: 'INVÁLIDO' },
+      'soviet-trolleybus': { title: 'TROLEBÚS', subtitle: 'TRÁNSITO URBANO', footerLeft: 'GUARDAR HASTA', footerRight: 'FIN DEL VIAJE' },
+      'golden-ticket': { title: 'BOLETO DORADO', subtitle: 'GANADOR AFORTUNADO', footerLeft: 'ENTRADA 1', footerRight: 'TOUR DE FÁBRICA' },
+      'metro-pass': { title: 'PASE DE METRO', subtitle: 'MENSUAL', footerLeft: 'ZONA 1-3', footerRight: 'ILIMITADO' },
+      lottery: { title: 'BOLETO DE LOTERÍA', subtitle: 'PREMIO MAYOR', footerLeft: 'FECHA DE SORTEO', footerRight: 'HOY' }
+    }
+  },
+  zh: {
+    title: "Make100",
+    solved: "已解决",
+    skipped: "已跳过",
+    operators: "符号",
+    current: "当前",
+    total: "总计",
+    theme: "主题",
+    language: "语言",
+    light: "浅色",
+    dark: "深色",
+    menu: "菜单",
+    play: "开始!",
+    skipDemo: "跳过演示",
+    demoTitle: "怎么玩？",
+    demo1: "给你6个随机数字",
+    demo2: "空白处将它们组合成数字",
+    demo3: "点击方块并选择符号",
+    demo4: "使用 +, -, *, / 和括号",
+    demo5: "正好凑成100！",
+    soundAndVibration: "声音和震动",
+    sound: "声音",
+    vibration: "震动",
+    tapGaps: "点击空白处并插入符号",
+    skipTicket: "跳过门票",
+    introText: "使用数学符号将门票上的数字凑成100。",
+    start: "开始",
+    perfect: "完美！",
+    solvedIn: "解决时间:",
+    operatorsUsed: "使用符号:",
+    nextTicket: "下一张门票",
+    tickets: {
+      flight: { title: '登机牌', subtitle: '头等舱', footerLeft: '登机口 14', footerRight: '座位 2A' },
+      concert: { title: '现场演唱会', subtitle: 'VIP 通道', footerLeft: '世界巡演', footerRight: '第 1 排' },
+      cinema: { title: '电影票', subtitle: '单人票', footerLeft: 'F 排', footerRight: '座位 12' },
+      train: { title: '特快列车', subtitle: '单程', footerLeft: '站台 9', footerRight: '车厢 4' },
+      'vintage-bus': { title: '公交车票', subtitle: 'AB 系列', footerLeft: '检票', footerRight: '车票' },
+      'vintage-tram': { title: '有轨电车', subtitle: '单程', footerLeft: '未打孔', footerRight: '无效' },
+      'soviet-trolleybus': { title: '无轨电车', subtitle: '城市交通', footerLeft: '保留至', footerRight: '行程结束' },
+      'golden-ticket': { title: '金奖券', subtitle: '幸运赢家', footerLeft: '入场 1', footerRight: '工厂参观' },
+      'metro-pass': { title: '地铁通行证', subtitle: '月票', footerLeft: '区域 1-3', footerRight: '无限次' },
+      lottery: { title: '彩票', subtitle: '头奖', footerLeft: '开奖日期', footerRight: '今天' }
+    }
+  },
+  ja: {
+    title: "Make100",
+    solved: "解決済み",
+    skipped: "スキップ",
+    operators: "記号",
+    current: "現在",
+    total: "合計",
+    theme: "テーマ",
+    language: "言語",
+    light: "ライト",
+    dark: "ダーク",
+    menu: "メニュー",
+    play: "プレイ！",
+    skipDemo: "デモをスキップ",
+    demoTitle: "遊び方",
+    demo1: "6つのランダムな数字が与えられます",
+    demo2: "空白はそれらを数字に結合します",
+    demo3: "四角をタップして記号を選びます",
+    demo4: "+, -, *, /, 括弧を使用します",
+    demo5: "ちょうど100を作ってください！",
+    soundAndVibration: "音と振動",
+    sound: "音",
+    vibration: "振動",
+    tapGaps: "空白をタップして記号を挿入",
+    skipTicket: "チケットをスキップ",
+    introText: "数学記号を使用して、チケットの数字から100を作ります。",
+    start: "スタート",
+    perfect: "完璧！",
+    solvedIn: "解決時間:",
+    operatorsUsed: "使用した記号:",
+    nextTicket: "次のチケット",
+    tickets: {
+      flight: { title: '搭乗券', subtitle: 'ファーストクラス', footerLeft: 'ゲート 14', footerRight: '座席 2A' },
+      concert: { title: 'ライブコンサート', subtitle: 'VIPアクセス', footerLeft: 'ワールドツアー', footerRight: '1列目' },
+      cinema: { title: '映画のチケット', subtitle: '1名入場', footerLeft: 'F列', footerRight: '座席 12' },
+      train: { title: '特急列車', subtitle: '片道', footerLeft: 'プラットフォーム 9', footerRight: '4号車' },
+      'vintage-bus': { title: 'バスのチケット', subtitle: 'ABシリーズ', footerLeft: 'コントロール', footerRight: 'チケット' },
+      'vintage-tram': { title: '路面電車', subtitle: '片道', footerLeft: 'パンチなし', footerRight: '無効' },
+      'soviet-trolleybus': { title: 'トロリーバス', subtitle: '市内交通', footerLeft: '最後まで', footerRight: '保管してください' },
+      'golden-ticket': { title: 'ゴールデンチケット', subtitle: '幸運な勝者', footerLeft: '入場 1', footerRight: '工場見学' },
+      'metro-pass': { title: '地下鉄パス', subtitle: '月間', footerLeft: 'ゾーン 1-3', footerRight: '無制限' },
+      lottery: { title: '宝くじ', subtitle: 'ジャックポット', footerLeft: '抽選日', footerRight: '今日' }
+    }
+  },
+  ko: {
+    title: "Make100",
+    solved: "해결됨",
+    skipped: "건너뜀",
+    operators: "기호",
+    current: "현재",
+    total: "총",
+    theme: "테마",
+    language: "언어",
+    light: "라이트",
+    dark: "다크",
+    menu: "메뉴",
+    play: "플레이!",
+    skipDemo: "데모 건너뛰기",
+    demoTitle: "게임 방법",
+    demo1: "6개의 무작위 숫자가 주어집니다",
+    demo2: "빈칸은 숫자를 결합합니다",
+    demo3: "사각형을 탭하고 기호를 선택하세요",
+    demo4: "+, -, *, /, 괄호를 사용하세요",
+    demo5: "정확히 100을 만드세요!",
+    soundAndVibration: "소리 및 진동",
+    sound: "소리",
+    vibration: "진동",
+    tapGaps: "빈칸을 탭하고 기호 삽입",
+    skipTicket: "티켓 건너뛰기",
+    introText: "수학 기호를 사용하여 티켓의 숫자로 100을 만드세요.",
+    start: "시작",
+    perfect: "완벽해요!",
+    solvedIn: "해결 시간:",
+    operatorsUsed: "사용된 기호:",
+    nextTicket: "다음 티켓",
+    tickets: {
+      flight: { title: '탑승권', subtitle: '일등석', footerLeft: '게이트 14', footerRight: '좌석 2A' },
+      concert: { title: '라이브 콘서트', subtitle: 'VIP 입장', footerLeft: '월드 투어', footerRight: '1열' },
+      cinema: { title: '영화 티켓', subtitle: '1인 입장', footerLeft: 'F열', footerRight: '좌석 12' },
+      train: { title: '급행 열차', subtitle: '편도', footerLeft: '플랫폼 9', footerRight: '4호차' },
+      'vintage-bus': { title: '버스 티켓', subtitle: 'AB 시리즈', footerLeft: '검표', footerRight: '티켓' },
+      'vintage-tram': { title: '트램', subtitle: '편도', footerLeft: '펀치 없음', footerRight: '무효' },
+      'soviet-trolleybus': { title: '트롤리버스', subtitle: '도시 교통', footerLeft: '보관 기한', footerRight: '여행 종료' },
+      'golden-ticket': { title: '골든 티켓', subtitle: '행운의 당첨자', footerLeft: '입장 1', footerRight: '공장 투어' },
+      'metro-pass': { title: '지하철 패스', subtitle: '월간', footerLeft: '구역 1-3', footerRight: '무제한' },
+      lottery: { title: '복권', subtitle: '잭팟', footerLeft: '추첨일', footerRight: '오늘' }
+    }
+  }
+};
+
+type Language = keyof typeof TRANSLATIONS;
 
 function calculateResult(digits: string[], gaps: string[]): number {
   let expr = gaps[0];
@@ -13,8 +428,8 @@ function calculateResult(digits: string[], gaps: string[]): number {
   expr = expr.replace(/,/g, '.');
   
   try {
-    let openParens = (expr.match(/\(/g) || []).length;
-    let closeParens = (expr.match(/\)/g) || []).length;
+    const openParens = (expr.match(/\(/g) || []).length;
+    const closeParens = (expr.match(/\)/g) || []).length;
     if (openParens !== closeParens) return NaN;
     
     // Prevent octal literals (e.g., 012 -> 12)
@@ -36,103 +451,43 @@ function calculateResult(digits: string[], gaps: string[]): number {
 function hasSolution(digits: string[]): boolean {
   const ops = ['+', '-', '*', '/', ''];
   for (let i = 0; i < 3125; i++) {
-    let currentOps = [''];
+    const currentOps = [''];
     let temp = i;
     for (let j = 0; j < 5; j++) {
       currentOps.push(ops[temp % 5]);
       temp = Math.floor(temp / 5);
     }
     currentOps.push('');
-    let res = calculateResult(digits, currentOps);
+    const res = calculateResult(digits, currentOps);
     if (res === 100) return true;
   }
   return false;
 }
 
 function generateSolvableTicket(): string[] {
+  // eslint-disable-next-line no-constant-condition
   while (true) {
-    let num = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
-    let digits = num.split('');
+    const num = Math.floor(Math.random() * 1000000).toString().padStart(6, '0');
+    const digits = num.split('');
     if (hasSolution(digits)) {
       return digits;
     }
-  }
+}
 }
 
-const COUNTRIES = [
-  { format: 'generic1' },
-  { format: 'generic2' },
-  { format: 'generic3' },
-  { format: 'generic4' },
-];
-
-// Images of cars from all over the world with precise positioning
-const CAR_IMAGES = [
-  {
-    // Red sports car
-    url: 'https://images.pexels.com/photos/210019/pexels-photo-210019.jpeg?auto=compress&cs=tinysrgb&w=1200', 
-    top: '72%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Lamborghini
-    url: 'https://images.pexels.com/photos/3802510/pexels-photo-3802510.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '78%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Classic car
-    url: 'https://images.pexels.com/photos/358070/pexels-photo-358070.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '70%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Range Rover
-    url: 'https://images.pexels.com/photos/116675/pexels-photo-116675.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '80%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Blue car
-    url: 'https://images.pexels.com/photos/112460/pexels-photo-112460.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '82%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // White Porsche
-    url: 'https://images.pexels.com/photos/170811/pexels-photo-170811.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '72%', left: '50%', baseScale: 0.55, rotateZ: '-1deg', rotateX: '5deg', bgScale: 1
-  },
-  {
-    // Red Mustang
-    url: 'https://images.pexels.com/photos/3311574/pexels-photo-3311574.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '82%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Yellow Camaro
-    url: 'https://images.pexels.com/photos/120049/pexels-photo-120049.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '75%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Silver Mercedes
-    url: 'https://images.pexels.com/photos/112452/pexels-photo-112452.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '78%', left: '50%', baseScale: 0.55, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  },
-  {
-    // Vintage Beetle
-    url: 'https://images.pexels.com/photos/5046305/pexels-photo-5046305.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    top: '88%', left: '50%', baseScale: 0.45, rotateZ: '0deg', rotateX: '-5deg', bgScale: 1
-  }
-];
-
-const TICKET_STYLES = [
+const getTicketStyles = (t: typeof TRANSLATIONS['ru']) => [
   {
     id: 'flight',
     containerClass: 'bg-white rounded-xl shadow-2xl border-l-[12px] border-blue-600 p-5 sm:p-6',
     icon: Plane,
     iconClass: 'text-blue-600',
-    title: 'BOARDING PASS',
-    subtitle: 'FIRST CLASS',
+    title: t.tickets.flight.title || 'BOARDING PASS',
+    subtitle: t.tickets.flight.subtitle || 'FIRST CLASS',
     labelClass: 'text-slate-400 font-bold uppercase tracking-wider text-xs',
     numberContainerClass: 'border-y-2 border-dashed border-slate-200 my-2',
     numberClass: 'text-slate-800',
-    footerLeft: 'GATE 14',
-    footerRight: 'SEAT 2A',
+    footerLeft: t.tickets.flight.footerLeft || 'GATE 14',
+    footerRight: t.tickets.flight.footerRight || 'SEAT 2A',
     footerClass: 'text-slate-800 font-black uppercase text-sm',
     hasBarcode: true,
     pattern: 'radial-gradient(#e2e8f0 1px, transparent 1px)'
@@ -142,13 +497,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-gradient-to-br from-purple-900 via-indigo-900 to-black rounded-2xl shadow-[0_0_30px_rgba(168,85,247,0.4)] p-5 sm:p-6 border border-purple-500/30 text-white',
     icon: Music,
     iconClass: 'text-pink-400',
-    title: 'LIVE CONCERT',
-    subtitle: 'VIP ACCESS',
+    title: t.tickets.concert.title || 'LIVE CONCERT',
+    subtitle: t.tickets.concert.subtitle || 'VIP ACCESS',
     labelClass: 'text-purple-300/70 font-bold uppercase tracking-widest text-xs',
     numberContainerClass: 'bg-black/40 rounded-xl backdrop-blur-sm border border-white/10 shadow-inner my-2',
     numberClass: 'text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-cyan-400 drop-shadow-[0_0_10px_rgba(236,72,153,0.5)]',
-    footerLeft: 'WORLD TOUR',
-    footerRight: 'ROW 1',
+    footerLeft: t.tickets.concert.footerLeft || 'WORLD TOUR',
+    footerRight: t.tickets.concert.footerRight || 'ROW 1',
     footerClass: 'text-white font-bold uppercase tracking-widest text-xs opacity-80',
     hasBarcode: false,
     pattern: 'radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px)'
@@ -158,13 +513,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-[#fdf6e3] rounded-sm shadow-xl p-5 sm:p-6 border-4 border-double border-[#d4af37] relative overflow-hidden',
     icon: Film,
     iconClass: 'text-[#d4af37]',
-    title: 'CINEMA TICKET',
-    subtitle: 'ADMIT ONE',
+    title: t.tickets.cinema.title || 'CINEMA TICKET',
+    subtitle: t.tickets.cinema.subtitle || 'ADMIT ONE',
     labelClass: 'text-[#8b7322] font-bold uppercase tracking-widest text-xs',
     numberContainerClass: 'my-4',
     numberClass: 'text-[#2c3e50] drop-shadow-sm',
-    footerLeft: 'ROW F',
-    footerRight: 'SEAT 12',
+    footerLeft: t.tickets.cinema.footerLeft || 'ROW F',
+    footerRight: t.tickets.cinema.footerRight || 'SEAT 12',
     footerClass: 'text-[#2c3e50] font-black uppercase text-sm',
     hasBarcode: true,
     pattern: 'radial-gradient(rgba(212,175,55,0.1) 1px, transparent 1px)'
@@ -174,13 +529,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-[#e8dcc5] rounded-sm shadow-md p-5 sm:p-6 border-x-[16px] border-dashed border-[#5c4033]',
     icon: Train,
     iconClass: 'text-[#5c4033]',
-    title: 'EXPRESS TRAIN',
-    subtitle: 'ONE WAY',
+    title: t.tickets.train.title || 'EXPRESS TRAIN',
+    subtitle: t.tickets.train.subtitle || 'ONE WAY',
     labelClass: 'text-[#8b6b53] font-bold uppercase tracking-widest text-xs',
     numberContainerClass: 'border-y border-[#5c4033]/30 my-2',
     numberClass: 'text-[#8b0000] opacity-90',
-    footerLeft: 'PLATFORM 9',
-    footerRight: 'CARRIAGE 4',
+    footerLeft: t.tickets.train.footerLeft || 'PLATFORM 9',
+    footerRight: t.tickets.train.footerRight || 'CARRIAGE 4',
     footerClass: 'text-[#5c4033] font-bold uppercase tracking-widest text-xs',
     hasBarcode: false,
     pattern: 'radial-gradient(rgba(92,64,51,0.1) 1px, transparent 1px)'
@@ -190,13 +545,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-[#e4d5b7] rounded-sm shadow-xl p-5 sm:p-6 border-2 border-[#8b7355] relative overflow-hidden',
     icon: Bus,
     iconClass: 'text-[#5c4a3d]',
-    title: 'АВТОБУСНЫЙ БИЛЕТ',
-    subtitle: 'СЕРИЯ АВ',
+    title: t.tickets['vintage-bus'].title || 'АВТОБУСНЫЙ БИЛЕТ',
+    subtitle: t.tickets['vintage-bus'].subtitle || 'СЕРИЯ АВ',
     labelClass: 'text-[#5c4a3d] font-serif font-bold uppercase tracking-widest text-xs',
     numberContainerClass: 'border-y-2 border-dashed border-[#8b7355] my-4 py-4',
     numberClass: 'text-[#8b0000] font-serif tracking-[0.2em]',
-    footerLeft: 'КОНТРОЛЬНЫЙ',
-    footerRight: 'БИЛЕТ',
+    footerLeft: t.tickets['vintage-bus'].footerLeft || 'КОНТРОЛЬНЫЙ',
+    footerRight: t.tickets['vintage-bus'].footerRight || 'БИЛЕТ',
     footerClass: 'text-[#5c4a3d] font-serif font-bold uppercase text-[10px] tracking-widest',
     hasBarcode: false,
     pattern: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(139,115,85,0.05) 10px, rgba(139,115,85,0.05) 20px)'
@@ -206,13 +561,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-[#d9cbb8] rounded-none shadow-md p-4 sm:p-6 border-x-[12px] border-dotted border-[#6b5b4e] relative',
     icon: TramFront,
     iconClass: 'text-[#3e322b]',
-    title: 'ТРАМВАЙ',
-    subtitle: 'РАЗОВЫЙ',
+    title: t.tickets['vintage-tram'].title || 'ТРАМВАЙ',
+    subtitle: t.tickets['vintage-tram'].subtitle || 'РАЗОВЫЙ',
     labelClass: 'text-[#3e322b] font-serif font-bold uppercase tracking-widest text-[10px] sm:text-xs',
     numberContainerClass: 'my-5 bg-[#cbbda8] p-3 rounded-sm shadow-inner border border-[#a89a85]',
     numberClass: 'text-[#2c241f] font-serif tracking-[0.25em]',
-    footerLeft: 'БЕЗ КОМПОСТЕРА',
-    footerRight: 'НЕДЕЙСТВИТЕЛЕН',
+    footerLeft: t.tickets['vintage-tram'].footerLeft || 'БЕЗ КОМПОСТЕРА',
+    footerRight: t.tickets['vintage-tram'].footerRight || 'НЕДЕЙСТВИТЕЛЕН',
     footerClass: 'text-[#3e322b] font-serif font-bold uppercase text-[9px] sm:text-[10px] tracking-wider',
     hasBarcode: false,
     pattern: 'radial-gradient(rgba(0,0,0,0.04) 2px, transparent 2px)'
@@ -222,13 +577,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-[#c2d1c0] rounded-sm shadow-lg p-5 sm:p-6 border border-[#4a5d4e] relative',
     icon: CableCar,
     iconClass: 'text-[#2f3e33]',
-    title: 'ТРОЛЛЕЙБУС',
-    subtitle: 'ГОРТРАНС',
+    title: t.tickets['soviet-trolleybus'].title || 'ТРОЛЛЕЙБУС',
+    subtitle: t.tickets['soviet-trolleybus'].subtitle || 'ГОРТРАНС',
     labelClass: 'text-[#2f3e33] font-serif font-bold uppercase tracking-widest text-xs',
     numberContainerClass: 'border-4 border-double border-[#4a5d4e] my-4 py-4 bg-[#b3c2b1]',
     numberClass: 'text-[#8b0000] font-serif tracking-[0.15em]',
-    footerLeft: 'СОХРАНЯТЬ ДО',
-    footerRight: 'КОНЦА ПОЕЗДКИ',
+    footerLeft: t.tickets['soviet-trolleybus'].footerLeft || 'СОХРАНЯТЬ ДО',
+    footerRight: t.tickets['soviet-trolleybus'].footerRight || 'КОНЦА ПОЕЗДКИ',
     footerClass: 'text-[#2f3e33] font-serif font-bold uppercase text-[9px] sm:text-[10px] tracking-widest',
     hasBarcode: false,
     pattern: 'none'
@@ -238,13 +593,13 @@ const TICKET_STYLES = [
     containerClass: 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-600 rounded-lg shadow-[0_0_40px_rgba(234,179,8,0.5)] p-5 sm:p-6 border-4 border-yellow-200 relative overflow-hidden',
     icon: Star,
     iconClass: 'text-yellow-100',
-    title: 'GOLDEN TICKET',
-    subtitle: 'LUCKY WINNER',
+    title: t.tickets['golden-ticket'].title || 'GOLDEN TICKET',
+    subtitle: t.tickets['golden-ticket'].subtitle || 'LUCKY WINNER',
     labelClass: 'text-yellow-900 font-serif font-black uppercase tracking-widest text-xs',
     numberContainerClass: 'border-y-4 border-double border-yellow-700/30 my-4 py-4 bg-yellow-400/20',
     numberClass: 'text-yellow-900 font-serif tracking-[0.2em] drop-shadow-md',
-    footerLeft: 'ADMIT 1',
-    footerRight: 'FACTORY TOUR',
+    footerLeft: t.tickets['golden-ticket'].footerLeft || 'ADMIT 1',
+    footerRight: t.tickets['golden-ticket'].footerRight || 'FACTORY TOUR',
     footerClass: 'text-yellow-900 font-serif font-bold uppercase text-[10px] tracking-widest',
     hasBarcode: false,
     pattern: 'radial-gradient(rgba(255,255,255,0.2) 2px, transparent 2px)'
@@ -272,30 +627,30 @@ const TICKET_STYLES = [
     iconClass: 'text-emerald-600',
     title: 'LOTTERY TICKET',
     subtitle: 'JACKPOT',
-    labelClass: 'text-emerald-800 font-sans font-black uppercase tracking-widest text-xs',
-    numberContainerClass: 'bg-emerald-100 border-2 border-dashed border-emerald-400 rounded-full my-4 py-4',
-    numberClass: 'text-emerald-700 font-sans font-black tracking-[0.3em]',
-    footerLeft: 'DRAW DATE',
-    footerRight: 'TODAY',
-    footerClass: 'text-emerald-600 font-sans font-bold uppercase text-[10px] tracking-widest',
+    labelClass: 'text-emerald-800 font-bold uppercase tracking-widest text-xs',
+    numberContainerClass: 'bg-emerald-100 rounded-full my-4 py-3 border-2 border-emerald-300 shadow-inner',
+    numberClass: 'text-emerald-700 font-mono tracking-[0.3em]',
+    footerLeft: 'DRAW 42',
+    footerRight: 'GOOD LUCK',
+    footerClass: 'text-emerald-600 font-bold uppercase text-[10px] tracking-widest',
     hasBarcode: true,
     pattern: 'radial-gradient(rgba(16,185,129,0.1) 2px, transparent 2px)'
   }
 ];
 
-function DemoOverlay({ onComplete }: { onComplete: () => void }) {
+function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRANSLATIONS['ru'] }) {
   const [step, setStep] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
     const sequence = async () => {
-      await new Promise(r => setTimeout(r, 3500));
+      await new Promise(r => setTimeout(r, 2500));
       if (!isMounted) return; setStep(1);
-      await new Promise(r => setTimeout(r, 4000));
+      await new Promise(r => setTimeout(r, 3000));
       if (!isMounted) return; setStep(2);
-      await new Promise(r => setTimeout(r, 4000));
+      await new Promise(r => setTimeout(r, 3000));
       if (!isMounted) return; setStep(3);
-      await new Promise(r => setTimeout(r, 4000));
+      await new Promise(r => setTimeout(r, 3000));
       if (!isMounted) return; setStep(4);
     };
     sequence();
@@ -303,59 +658,59 @@ function DemoOverlay({ onComplete }: { onComplete: () => void }) {
   }, []);
 
   const messages = [
-    "Вам даны 6 случайных цифр",
-    "Пустой промежуток объединяет их в числа",
-    "Нажимайте на квадраты и выбирайте знаки",
-    "Используйте +, -, *, / и скобки",
-    "Соберите ровно 100!"
+    t.demo1,
+    t.demo2,
+    t.demo3,
+    t.demo4,
+    t.demo5
   ];
 
   return (
     <motion.div 
       key="demo"
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-2 sm:p-4"
+      className="fixed inset-0 z-[100] bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-2 sm:p-4"
     >
       <div className="w-full max-w-lg flex flex-col items-center">
-        <h2 className="text-2xl sm:text-3xl font-black text-white mb-6 text-center">Как играть?</h2>
+        <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white mb-6 text-center">{t.demoTitle}</h2>
         
-        <div className="bg-zinc-900 p-4 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-800 shadow-2xl w-full flex flex-col items-center relative overflow-hidden">
-          <p className="text-zinc-400 text-center h-12 mb-4 font-medium text-sm sm:text-base px-4">
+        <div className="bg-zinc-50 dark:bg-zinc-900 p-4 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl w-full flex flex-col items-center relative overflow-hidden">
+          <p className="text-zinc-600 dark:text-zinc-400 text-center h-12 mb-4 font-medium text-sm sm:text-base px-4">
             {messages[step]}
           </p>
 
-          <div className="flex items-center justify-center gap-0.5 sm:gap-1.5 text-2xl sm:text-4xl font-mono font-black text-white mb-6 h-16 w-full px-2">
+          <div className="flex items-center justify-center gap-0.5 sm:gap-1.5 text-2xl sm:text-4xl font-mono font-black text-zinc-900 dark:text-white mb-6 h-16 w-full px-2">
              <span>9</span>
              <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step === 0 ? 'w-6 sm:w-10 border-zinc-700 bg-zinc-800' : 
+               step === 0 ? 'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
                'w-0 border-0 opacity-0 mx-[-2px] sm:mx-[-4px]'
              }`}></div>
              <span>8</span>
              <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
                step === 2 ? 'border-orange-500 bg-orange-500/20 scale-110' : 
-               step >= 3 ? 'border-zinc-700 bg-zinc-800' : 
-               'border-zinc-700 bg-zinc-800'
+               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
+               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step >= 2 && <span className="text-orange-500">+</span>}
              </div>
              <span>7</span>
              <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step >= 3 ? 'border-zinc-700 bg-zinc-800' :
-               'border-zinc-700 bg-zinc-800'
+               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step >= 3 && <span className="text-orange-500">-</span>}
              </div>
              <span>6</span>
              <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step >= 3 ? 'border-zinc-700 bg-zinc-800' :
-               'border-zinc-700 bg-zinc-800'
+               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step >= 3 && <span className="text-orange-500">+</span>}
              </div>
              <span>5</span>
              <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step >= 3 ? 'border-zinc-700 bg-zinc-800' :
-               'border-zinc-700 bg-zinc-800'
+               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step >= 3 && <span className="text-orange-500">-</span>}
              </div>
@@ -363,30 +718,30 @@ function DemoOverlay({ onComplete }: { onComplete: () => void }) {
           </div>
 
           <div className="text-4xl sm:text-6xl font-black font-mono transition-all duration-500 h-16 flex items-center justify-center">
-             {step >= 4 ? <span className="text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]">= 100</span> : <span className="text-zinc-700">= ?</span>}
+             {step >= 4 ? <span className="text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]">= 100</span> : <span className="text-zinc-400 dark:text-zinc-700">= ?</span>}
           </div>
 
           <div className="h-16 mt-6 flex items-center justify-center w-full">
             {step >= 4 ? (
               <motion.div initial={{scale: 0}} animate={{scale: 1}} className="w-full">
                 <button onClick={onComplete} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)]">
-                  Играть!
+                  {t.play}
                 </button>
               </motion.div>
             ) : (
               <div className="flex gap-1.5 sm:gap-2 w-full justify-center opacity-60 pointer-events-none">
-                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><Plus size={20} className="text-zinc-400"/></div>
-                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><Minus size={20} className="text-zinc-400"/></div>
-                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><X size={20} className="text-zinc-400"/></div>
-                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center"><Divide size={20} className="text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center"><Plus size={20} className="text-zinc-500 dark:text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center"><Minus size={20} className="text-zinc-500 dark:text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center"><X size={20} className="text-zinc-500 dark:text-zinc-400"/></div>
+                 <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 flex items-center justify-center"><Divide size={20} className="text-zinc-500 dark:text-zinc-400"/></div>
               </div>
             )}
           </div>
         </div>
         
         {step < 4 && (
-          <button onClick={onComplete} className="mt-4 text-zinc-500 hover:text-zinc-300 font-bold px-6 py-2 transition-colors text-sm sm:text-base">
-            Пропустить демо
+          <button onClick={onComplete} className="mt-4 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 font-bold px-6 py-2 transition-colors text-sm sm:text-base">
+            {t.skipDemo}
           </button>
         )}
       </div>
@@ -396,20 +751,120 @@ function DemoOverlay({ onComplete }: { onComplete: () => void }) {
 
 export default function App() {
   const [digits, setDigits] = useState<string[]>([]);
-  const [letters, setLetters] = useState<string[]>(['A', 'A', 'A']);
   const [gaps, setGaps] = useState<string[]>(['', '', '', '', '', '', '']);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(1);
   const [won, setWon] = useState(false);
-  const [country, setCountry] = useState(COUNTRIES[0]);
-  const [carBg, setCarBg] = useState(CAR_IMAGES[0]);
-  const [ticketStyle, setTicketStyle] = useState(TICKET_STYLES[0]);
+
+  const [ticketStyleId, setTicketStyleId] = useState('flight');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [gameState, setGameState] = useState<'idle' | 'playing'>('idle');
-  const [gameMode, setGameMode] = useState<'car' | 'ticket'>('car');
-  const [isTelegram, setIsTelegram] = useState(false);
+  const [, setIsTelegram] = useState(false);
+  const [tgUser, setTgUser] = useState<TelegramUser | null>(null);
+  
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [language, setLanguage] = useState<Language>('ru');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [vibrationEnabled, setVibrationEnabled] = useState(true);
+  
+  const t = TRANSLATIONS[language];
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
   
   // Demo State
   const [showDemo, setShowDemo] = useState(true);
+
+  // Audio Context Ref
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const initAudio = () => {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
+    if (audioCtxRef.current.state === 'suspended') {
+      audioCtxRef.current.resume();
+    }
+  };
+
+  const playSound = useCallback((type: 'click' | 'success' | 'error' | 'skip') => {
+    if (!soundEnabled) return;
+    initAudio();
+    const ctx = audioCtxRef.current;
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(300, ctx.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.1);
+    } else if (type === 'success') {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      osc.frequency.setValueAtTime(600, ctx.currentTime + 0.1);
+      osc.frequency.setValueAtTime(800, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + 0.2);
+      gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.4);
+    } else if (type === 'error') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.2);
+    } else if (type === 'skip') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(300, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(150, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    }
+  }, [soundEnabled]);
+
+  const playVibration = useCallback((type: 'light' | 'medium' | 'heavy' | 'success' | 'error') => {
+    if (!vibrationEnabled) return;
+    
+    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
+      HapticFeedback?: {
+        impactOccurred: (style: string) => void;
+        notificationOccurred: (type: string) => void;
+      }
+    } | undefined;
+    if (tg?.HapticFeedback) {
+      if (type === 'light' || type === 'medium' || type === 'heavy') {
+        tg.HapticFeedback.impactOccurred(type);
+      } else if (type === 'success') {
+        tg.HapticFeedback.notificationOccurred('success');
+      } else if (type === 'error') {
+        tg.HapticFeedback.notificationOccurred('error');
+      }
+    } else if (navigator.vibrate) {
+      if (type === 'light') navigator.vibrate(10);
+      else if (type === 'medium') navigator.vibrate(20);
+      else if (type === 'heavy') navigator.vibrate(40);
+      else if (type === 'success') navigator.vibrate([30, 50, 30]);
+      else if (type === 'error') navigator.vibrate([50, 50, 50]);
+    }
+  }, [vibrationEnabled]);
 
   const completeDemo = () => {
     setShowDemo(false);
@@ -421,58 +876,137 @@ export default function App() {
   const [unsolvedCount, setUnsolvedCount] = useState(0);
   const [totalSolveTime, setTotalSolveTime] = useState(0);
   const [totalOperatorsUsed, setTotalOperatorsUsed] = useState(0);
-  
-  const [carWidth, setCarWidth] = useState(800);
-  const carContainerRef = React.useRef<HTMLDivElement>(null);
+  const [statsLoaded, setStatsLoaded] = useState(false);
 
   useEffect(() => {
-    const observer = new ResizeObserver(entries => {
-      for (let entry of entries) {
-        setCarWidth(entry.contentRect.width);
+    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
+      initData?: string;
+      CloudStorage?: {
+        getItem: (key: string, callback: (err: Error | null, value: string) => void) => void;
       }
-    });
-    if (carContainerRef.current) {
-      observer.observe(carContainerRef.current);
+    } | undefined;
+    const loadStats = () => {
+      if (tg?.initData && tg?.CloudStorage) {
+        try {
+          tg.CloudStorage.getItem('make100_stats', (err: Error | null, value: string) => {
+            if (!err && value) {
+              try {
+                const parsed = JSON.parse(value);
+                setSolvedCount(parsed.solvedCount || 0);
+                setUnsolvedCount(parsed.unsolvedCount || 0);
+                setTotalSolveTime(parsed.totalSolveTime || 0);
+                setTotalOperatorsUsed(parsed.totalOperatorsUsed || 0);
+                if (parsed.theme) setTheme(parsed.theme);
+                if (parsed.language) setLanguage(parsed.language);
+                if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
+                if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
+              } catch (e) { console.error(e); }
+            }
+            setStatsLoaded(true);
+          });
+          // Fallback in case CloudStorage callback never fires
+          setTimeout(() => setStatsLoaded(true), 1000);
+        } catch (e) {
+          console.error("CloudStorage error", e);
+          setStatsLoaded(true);
+        }
+      } else {
+        const localStats = localStorage.getItem('make100_stats');
+        if (localStats) {
+          try {
+            const parsed = JSON.parse(localStats);
+            setSolvedCount(parsed.solvedCount || 0);
+            setUnsolvedCount(parsed.unsolvedCount || 0);
+            setTotalSolveTime(parsed.totalSolveTime || 0);
+            setTotalOperatorsUsed(parsed.totalOperatorsUsed || 0);
+            if (parsed.theme) setTheme(parsed.theme);
+            if (parsed.language) setLanguage(parsed.language);
+            if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
+            if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
+          } catch (e) { console.error(e); }
+        }
+        setStatsLoaded(true);
+      }
+    };
+    loadStats();
+  }, []);
+
+  useEffect(() => {
+    if (!statsLoaded) return;
+    
+    const stats = { solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, soundEnabled, vibrationEnabled };
+    const statsStr = JSON.stringify(stats);
+    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
+      initData?: string;
+      CloudStorage?: {
+        setItem: (key: string, value: string) => void;
+      }
+    } | undefined;
+    
+    if (tg?.initData && tg?.CloudStorage) {
+      try {
+        tg.CloudStorage.setItem('make100_stats', statsStr);
+      } catch (e) {
+        console.error("CloudStorage save error", e);
+      }
+    } else {
+      localStorage.setItem('make100_stats', statsStr);
     }
-    return () => observer.disconnect();
-  }, [carBg, digits, country, gameMode]);
+  }, [solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, soundEnabled, vibrationEnabled, statsLoaded]);
 
   const initGame = useCallback((startAsIdle = false, isSkip = false) => {
     if (isSkip) {
       setUnsolvedCount(prev => prev + 1);
+      playSound('skip');
+      playVibration('medium');
+    } else if (!startAsIdle) {
+      playSound('click');
+      playVibration('light');
     }
     
     setDigits(generateSolvableTicket());
-    
-    const getRandomLetter = () => {
-      const chars = 'ABCEHKMOPTXY'; // Authentic looking Latin letters used in RU plates
-      return chars[Math.floor(Math.random() * chars.length)];
-    };
-    setLetters([getRandomLetter(), getRandomLetter(), getRandomLetter()]);
 
     setGaps(['', '', '', '', '', '', '']);
     setSelectedSlot(1);
     setWon(false);
-    setCountry(COUNTRIES[Math.floor(Math.random() * COUNTRIES.length)]);
-    setCarBg(CAR_IMAGES[Math.floor(Math.random() * CAR_IMAGES.length)]);
-    setTicketStyle(TICKET_STYLES[Math.floor(Math.random() * TICKET_STYLES.length)]);
+    
+    const styles = getTicketStyles(TRANSLATIONS[language] || TRANSLATIONS['ru']);
+    setTicketStyleId(styles[Math.floor(Math.random() * styles.length)].id);
     setElapsedTime(0);
     setGameState(startAsIdle === true ? 'idle' : 'playing');
-  }, []);
+  }, [playSound, playVibration, language]);
 
   useEffect(() => {
     // Initialize Telegram Web App
-    const tg = (window as any).Telegram?.WebApp;
+    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
+      initData?: string;
+      initDataUnsafe?: { user?: TelegramUser };
+      ready: () => void;
+      expand: () => void;
+      setHeaderColor: (color: string) => void;
+      setBackgroundColor: (color: string) => void;
+      BackButton: { onClick: (cb: () => void) => void };
+      close: () => void;
+    } | undefined;
     if (tg && tg.initData) {
       setIsTelegram(true);
       tg.ready();
       tg.expand();
       
+      if (tg.initDataUnsafe?.user) {
+        setTgUser(tg.initDataUnsafe.user);
+      }
+      
       // Set theme based on Telegram settings
       // We force dark mode, so we don't need to read tg.colorScheme for the app theme
       
       // Set header color
-      tg.setHeaderColor('#09090b'); // zinc-950
+      try {
+        tg.setHeaderColor(theme === 'dark' ? '#09090b' : '#fafafa'); // zinc-950 or zinc-50
+        tg.setBackgroundColor(theme === 'dark' ? '#09090b' : '#fafafa');
+      } catch (e) {
+        console.error("Failed to set Telegram colors", e);
+      }
       
       // Setup Back Button
       tg.BackButton.onClick(() => {
@@ -483,10 +1017,13 @@ export default function App() {
         }
       });
     }
-  }, [gameState]);
+  }, [gameState, theme]);
 
   useEffect(() => {
-    const tg = (window as any).Telegram?.WebApp;
+    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
+      initData?: string;
+      BackButton: { show: () => void; hide: () => void };
+    } | undefined;
     if (tg && tg.initData) {
       if (gameState === 'playing') {
         tg.BackButton.show();
@@ -514,11 +1051,15 @@ export default function App() {
     const newGaps = [...gaps];
     if (op === 'Backspace') {
       newGaps[selectedSlot] = newGaps[selectedSlot].slice(0, -1);
+      playSound('click');
+      playVibration('light');
     } else {
       newGaps[selectedSlot] += op;
+      playSound('click');
+      playVibration('medium');
     }
     setGaps(newGaps);
-  }, [selectedSlot, gaps, won]);
+  }, [selectedSlot, gaps, won, playSound, playVibration]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -539,13 +1080,17 @@ export default function App() {
         handleOp('Backspace');
       } else if (e.key === 'ArrowLeft') {
         setSelectedSlot(Math.max(0, selectedSlot - 1));
+        playSound('click');
+        playVibration('light');
       } else if (e.key === 'ArrowRight') {
         setSelectedSlot(Math.min(6, selectedSlot + 1));
+        playSound('click');
+        playVibration('light');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [selectedSlot, handleOp, won, initGame, gameState]);
+  }, [selectedSlot, handleOp, won, initGame, gameState, playSound, playVibration]);
 
   const currentResult = digits.length ? calculateResult(digits, gaps) : 0;
   const isWin = currentResult === 100;
@@ -554,6 +1099,8 @@ export default function App() {
     if (isWin && !won) {
       setWon(true);
       setGameState('idle');
+      playSound('success');
+      playVibration('success');
       
       // Update statistics
       setSolvedCount(prev => prev + 1);
@@ -565,36 +1112,16 @@ export default function App() {
       
       setSelectedSlot(null);
     }
-  }, [isWin, won, elapsedTime, gaps]);
+  }, [isWin, won, elapsedTime, gaps, playSound, playVibration]);
 
   if (!digits.length) return null;
 
-  const renderLicensePlate = () => {
-    const numStr = digits.join('');
-    
-    return (
-      <div className="bg-[#111] p-2 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)]">
-        <div className="relative bg-white text-black border-[3px] border-gray-300 rounded-lg flex items-center justify-between px-6 overflow-hidden z-10 h-24 w-[460px]">
-          <div className="flex items-center" style={{ fontFamily: "'Arial Black', sans-serif" }}>
-            <span className="text-[2.5rem] font-normal mr-2 mt-1">{letters[0]}</span>
-            <span className="text-[4.5rem] leading-none font-black tracking-wider">{numStr.slice(0, 3)}</span>
-            <span className="text-[2.5rem] font-normal ml-2 mt-1 tracking-widest">{letters[1]}{letters[2]}</span>
-          </div>
-          <div className="w-[3px] h-[80px] bg-black/80 mx-2"></div>
-          <div className="flex items-center justify-center" style={{ fontFamily: "'Arial Black', sans-serif" }}>
-            <span className="text-[3.5rem] leading-none font-black">{numStr.slice(3, 6)}</span>
-          </div>
-        </div>
-        <div className="text-center text-white/80 text-[10px] tracking-[0.3em] mt-1.5 font-black">
-          Make100
-        </div>
-      </div>
-    );
-  };
-
   const renderTicket = () => {
+    const styles = getTicketStyles(t);
+    const ticketStyle = styles.find(s => s.id === ticketStyleId) || styles[0];
     const numStr = digits.join('');
     const Icon = ticketStyle.icon;
+    const tTicket = t.tickets?.[ticketStyle.id as keyof typeof t.tickets] || ticketStyle;
     
     return (
       <div className={`relative w-full max-w-sm mx-auto overflow-hidden ${ticketStyle.containerClass}`}>
@@ -604,9 +1131,9 @@ export default function App() {
         <div className="flex justify-between items-center mb-4 relative z-10">
           <div className="flex items-center gap-2">
             <Icon className={ticketStyle.iconClass} size={20} />
-            <span className={ticketStyle.labelClass}>{ticketStyle.title}</span>
+            <span className={ticketStyle.labelClass}>{tTicket.title}</span>
           </div>
-          <span className={ticketStyle.labelClass}>{ticketStyle.subtitle}</span>
+          <span className={ticketStyle.labelClass}>{tTicket.subtitle}</span>
         </div>
         
         <div className={`py-6 sm:py-8 flex justify-center items-center relative z-10 ${ticketStyle.numberContainerClass}`}>
@@ -616,8 +1143,8 @@ export default function App() {
         </div>
         
         <div className="flex justify-between items-center mt-4 relative z-10">
-          <span className={ticketStyle.footerClass}>{ticketStyle.footerLeft}</span>
-          <span className={ticketStyle.footerClass}>{ticketStyle.footerRight}</span>
+          <span className={ticketStyle.footerClass}>{tTicket.footerLeft}</span>
+          <span className={ticketStyle.footerClass}>{tTicket.footerRight}</span>
         </div>
         
         {/* Barcode */}
@@ -629,111 +1156,171 @@ export default function App() {
   };
 
   return (
-    <div className={`h-[100dvh] dark bg-zinc-950 text-zinc-100 transition-colors duration-300 font-sans overflow-hidden relative flex flex-col items-center p-2 sm:p-4 md:p-6`}>
-      <div className={`fixed inset-0 pointer-events-none z-0 bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]`} />
+    <div className={`h-[100dvh] ${theme} bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans overflow-hidden relative flex flex-col items-center p-2 sm:p-4 md:p-6`}>
+      <div className={`fixed inset-0 pointer-events-none z-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]`} />
       
       {/* Header */}
       <header className="w-full max-w-4xl flex justify-between items-center mb-2 sm:mb-4 z-10 flex-shrink-0">
          <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-black tracking-tighter text-white drop-shadow-md">Make100</h1>
+            {tgUser ? (
+              <div className="flex items-center gap-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 pr-3 pl-1 py-1 rounded-full shadow-sm">
+                {tgUser.photo_url ? (
+                  <img src={tgUser.photo_url} alt={tgUser.first_name} className="w-8 h-8 rounded-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  <div className="w-8 h-8 rounded-full bg-orange-500/20 text-orange-500 flex items-center justify-center">
+                    <User size={16} />
+                  </div>
+                )}
+                <span className="text-sm font-bold text-zinc-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">{tgUser.first_name}</span>
+              </div>
+            ) : (
+              <h1 className="text-3xl font-black tracking-tighter text-zinc-900 dark:text-white drop-shadow-md">Make100</h1>
+            )}
          </div>
 
-         {/* Desktop Mode Selector */}
-         <div className="hidden sm:flex bg-zinc-900/80 backdrop-blur-md p-1 rounded-xl gap-1 border border-zinc-800/50">
+         <div className="flex items-center gap-2">
            <button 
-             onClick={() => setGameMode('car')}
-             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${gameMode === 'car' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`}
+             onClick={() => setIsMenuOpen(true)}
+             className="p-2 rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
            >
-             Автомобиль
+             <Menu size={24} />
            </button>
-           <button 
-             onClick={() => setGameMode('ticket')}
-             className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${gameMode === 'ticket' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`}
-           >
-             Билет
-           </button>
-         </div>
-
-         <div className="flex gap-2 sm:gap-3">
-           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem]">
-              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Решено</span>
-              <span className="font-mono text-base sm:text-lg font-bold text-green-400">{solvedCount}</span>
-           </div>
-           
-           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem]">
-              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Пропущено</span>
-              <span className="font-mono text-base sm:text-lg font-bold text-red-400">{unsolvedCount}</span>
-           </div>
-
-           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] hidden sm:flex">
-              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Знаков</span>
-              <span className="font-mono text-base sm:text-lg font-bold text-blue-400">{totalOperatorsUsed}</span>
-           </div>
-
-           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem]">
-              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Текущее</span>
-              <span className="font-mono text-base sm:text-lg font-bold text-zinc-200">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span>
-           </div>
-
-           <div className="bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] hidden sm:flex">
-              <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">Общее</span>
-              <span className="font-mono text-base sm:text-lg font-bold text-zinc-200">{Math.floor(totalSolveTime / 60)}:{(totalSolveTime % 60).toString().padStart(2, '0')}</span>
-           </div>
          </div>
       </header>
 
-      {/* Mobile Mode Selector */}
-      <div className="sm:hidden w-full max-w-4xl flex justify-center mb-2 z-10 flex-shrink-0">
-         <div className="bg-zinc-900/80 backdrop-blur-md p-1 rounded-xl flex gap-1 border border-zinc-800/50 w-full">
-           <button 
-             onClick={() => setGameMode('car')}
-             className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${gameMode === 'car' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`}
-           >
-             Автомобиль
-           </button>
-           <button 
-             onClick={() => setGameMode('ticket')}
-             className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all ${gameMode === 'ticket' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-200'}`}
-           >
-             Билет
-           </button>
+      {/* Stats Row */}
+      <div className="w-full max-w-4xl flex flex-wrap justify-center gap-2 sm:gap-3 mb-4 sm:mb-6 z-10 flex-shrink-0">
+         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] flex-1 sm:flex-none">
+            <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">{t.solved}</span>
+            <span className="font-mono text-base sm:text-lg font-bold text-green-500 dark:text-green-400">{solvedCount}</span>
+         </div>
+         
+         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] flex-1 sm:flex-none">
+            <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">{t.skipped}</span>
+            <span className="font-mono text-base sm:text-lg font-bold text-red-500 dark:text-red-400">{unsolvedCount}</span>
+         </div>
+
+         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] flex-1 sm:flex-none">
+            <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">{t.operators}</span>
+            <span className="font-mono text-base sm:text-lg font-bold text-blue-500 dark:text-blue-400">{totalOperatorsUsed}</span>
+         </div>
+
+         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] flex-1 sm:flex-none">
+            <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">{t.current}</span>
+            <span className="font-mono text-base sm:text-lg font-bold text-zinc-700 dark:text-zinc-200">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span>
+         </div>
+
+         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 px-3 sm:px-4 py-2 rounded-2xl flex flex-col items-center justify-center shadow-sm min-w-[4rem] flex-1 sm:flex-none">
+            <span className="text-zinc-500 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest">{t.total}</span>
+            <span className="font-mono text-base sm:text-lg font-bold text-zinc-700 dark:text-zinc-200">{Math.floor(totalSolveTime / 60)}:{(totalSolveTime % 60).toString().padStart(2, '0')}</span>
          </div>
       </div>
 
-      {/* Visual Block (Car or Ticket) */}
-      <div className="flex-1 min-h-0 w-full max-w-4xl flex items-center justify-center mb-2 sm:mb-4 z-10 relative">
-        {gameMode === 'car' ? (
+      {/* Menu Overlay */}
+      <AnimatePresence>
+        {isMenuOpen && (
           <motion.div 
-            key={digits.join('') + country.format + 'car'}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative rounded-2xl sm:rounded-3xl shadow-2xl border border-white/10 flex items-center justify-center overflow-hidden"
-            style={{ maxHeight: '100%', maxWidth: '100%' }}
-            ref={carContainerRef}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[200] bg-zinc-950/80 backdrop-blur-sm flex justify-end"
+            onClick={() => setIsMenuOpen(false)}
           >
-            <img 
-              src={carBg.url} 
-              alt="Car" 
-              className="block rounded-2xl sm:rounded-3xl" 
-              style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
-              crossOrigin="anonymous"
-            />
-            
-            {/* The Plate positioned naturally on the car */}
-            <div 
-              className="absolute origin-center z-20"
-              style={{
-                top: carBg.top,
-                left: carBg.left,
-                transform: `translate(-50%, -50%) scale(${(carWidth / 800) * carBg.baseScale}) rotateX(${carBg.rotateX || '0deg'}) rotateZ(${carBg.rotateZ || '0deg'})`,
-                filter: 'drop-shadow(0 15px 30px rgba(0,0,0,0.7))',
-                transformStyle: 'preserve-3d'
-              }}
+            <motion.div 
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="w-full max-w-sm h-full bg-white dark:bg-zinc-900 shadow-2xl flex flex-col"
+              onClick={e => e.stopPropagation()}
             >
-              {renderLicensePlate()}
-            </div>
+              <div className="flex justify-between items-center p-4 sm:p-6 border-b border-zinc-200 dark:border-zinc-800">
+                <h2 className="text-xl font-bold text-zinc-900 dark:text-white">{t.menu}</h2>
+                <button onClick={() => setIsMenuOpen(false)} className="p-2 text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors">
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto">
+                {/* Theme */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.theme}</span>
+                  <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+                    <button 
+                      onClick={() => { setTheme('light'); playSound('click'); playVibration('light'); }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${theme === 'light' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+                    >
+                      <Sun size={16} /> {t.light}
+                    </button>
+                    <button 
+                      onClick={() => { setTheme('dark'); playSound('click'); playVibration('light'); }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${theme === 'dark' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+                    >
+                      <Moon size={16} /> {t.dark}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Sound & Vibration */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.soundAndVibration}</span>
+                  <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+                    <button 
+                      onClick={() => { 
+                        setSoundEnabled(!soundEnabled); 
+                        if (!soundEnabled) {
+                          // Play sound immediately after enabling
+                          setTimeout(() => playSound('click'), 50);
+                        }
+                        playVibration('light'); 
+                      }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${soundEnabled ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+                    >
+                      {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />} {t.sound}
+                    </button>
+                    <button 
+                      onClick={() => { 
+                        setVibrationEnabled(!vibrationEnabled); 
+                        playSound('click');
+                        if (!vibrationEnabled) {
+                          // Play vibration immediately after enabling
+                          setTimeout(() => playVibration('light'), 50);
+                        }
+                      }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${vibrationEnabled ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+                    >
+                      {vibrationEnabled ? <Vibrate size={16} /> : <VibrateOff size={16} />} {t.vibration}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Language */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.language}</span>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(Object.keys(TRANSLATIONS) as Language[]).map(lang => (
+                      <button
+                        key={lang}
+                        onClick={() => { setLanguage(lang); playSound('click'); playVibration('light'); }}
+                        className={`py-2 px-3 rounded-lg text-sm font-bold transition-all text-left ${language === lang ? 'bg-orange-500 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+                      >
+                        {lang === 'ru' ? 'Русский' : 
+                         lang === 'en' ? 'English' : 
+                         lang === 'de' ? 'Deutsch' : 
+                         lang === 'fr' ? 'Français' : 
+                         lang === 'pt' ? 'Português' : 
+                         lang === 'es' ? 'Español' : 
+                         lang === 'zh' ? '中文' : 
+                         lang === 'ja' ? '日本語' : 
+                         lang === 'ko' ? '한국어' : lang}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
-        ) : (
+        )}
+      </AnimatePresence>
+
+      {/* Visual Block (Ticket) */}
+      <div className="flex-1 min-h-0 w-full max-w-4xl flex items-center justify-center mb-2 sm:mb-4 z-10 relative">
           <motion.div 
             key={digits.join('') + 'ticket'}
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
@@ -744,7 +1331,6 @@ export default function App() {
               {renderTicket()}
             </div>
           </motion.div>
-        )}
       </div>
 
       <div className="w-full flex flex-col items-center z-10 mt-auto flex-shrink-0">
@@ -768,7 +1354,7 @@ export default function App() {
             </span>
           </div>
           
-          <p className="text-center text-zinc-400 dark:text-zinc-500 text-xs sm:text-sm md:text-base mt-2 md:mt-3 font-bold">Нажимайте на промежутки и вставляйте знаки</p>
+          <p className="text-center text-zinc-400 dark:text-zinc-500 text-xs sm:text-sm md:text-base mt-2 md:mt-3 font-bold">{t.tapGaps}</p>
         </div>
 
         {/* Keypad */}
@@ -786,16 +1372,16 @@ export default function App() {
         {/* Skip Button */}
         <button 
           onClick={() => initGame(false, true)}
-          className="mt-2 sm:mt-4 flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-white/20 dark:border-zinc-800/50 text-white/80 dark:text-zinc-400 hover:text-white dark:hover:text-white hover:bg-white/10 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-sm sm:text-base"
+          className="mt-2 sm:mt-4 flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-sm sm:text-base"
         >
           <RefreshCw size={18} />
-          {gameMode === 'car' ? 'Пропустить машину' : 'Пропустить билет'}
+          {t.skipTicket}
         </button>
       </div>
 
       {/* Modals */}
       <AnimatePresence>
-        {showDemo && <DemoOverlay onComplete={completeDemo} />}
+        {showDemo && <DemoOverlay onComplete={completeDemo} t={t} />}
 
         {gameState === 'idle' && !won && !showDemo && (
           <motion.div 
@@ -814,12 +1400,12 @@ export default function App() {
                 <Play size={36} className="ml-2" fill="currentColor" />
               </div>
               <h2 className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-white mb-4 tracking-tighter">Make100</h2>
-              <p className="text-zinc-500 dark:text-zinc-400 mb-8 text-lg leading-relaxed">Соберите 100 из цифр на номере автомобиля или билете, используя математические знаки.</p>
+              <p className="text-zinc-500 dark:text-zinc-400 mb-8 text-lg leading-relaxed">{t.introText}</p>
               <button 
                 onClick={() => setGameState('playing')}
                 className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:shadow-[0_12px_25px_rgba(249,115,22,0.35)] hover:-translate-y-1"
               >
-                Старт
+                {t.start}
               </button>
             </motion.div>
           </motion.div>
@@ -841,16 +1427,16 @@ export default function App() {
               <div className="w-24 h-24 sm:w-28 sm:h-28 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
                  <span className="text-5xl sm:text-6xl">🎉</span>
               </div>
-              <h2 className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-white mb-3 tracking-tighter">Идеально!</h2>
+              <h2 className="text-4xl sm:text-5xl font-black text-zinc-900 dark:text-white mb-3 tracking-tighter">{t.perfect}</h2>
               <div className="flex flex-col items-center gap-1 mb-8">
-                <p className="text-lg text-zinc-500 dark:text-zinc-400">Решено за: <span className="font-mono text-zinc-900 dark:text-white font-bold">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span></p>
-                <p className="text-lg text-zinc-500 dark:text-zinc-400">Использовано знаков: <span className="font-mono text-zinc-900 dark:text-white font-bold">{gaps.join('').replace(/[0-9.]/g, '').length}</span></p>
+                <p className="text-lg text-zinc-500 dark:text-zinc-400">{t.solvedIn} <span className="font-mono text-zinc-900 dark:text-white font-bold">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span></p>
+                <p className="text-lg text-zinc-500 dark:text-zinc-400">{t.operatorsUsed} <span className="font-mono text-zinc-900 dark:text-white font-bold">{gaps.join('').replace(/[0-9.]/g, '').length}</span></p>
               </div>
               <button 
                 onClick={() => initGame(false)}
                 className="w-full py-4 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_20px_rgba(255,255,255,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] hover:-translate-y-1"
               >
-                {gameMode === 'car' ? 'Следующая машина' : 'Следующий билет'}
+                {t.nextTicket}
               </button>
             </motion.div>
           </motion.div>
@@ -861,10 +1447,26 @@ export default function App() {
 }
 
 function Gap({ idx, value, selected, onClick }: { idx: number, value: string, selected: boolean, onClick: (idx: number) => void }) {
+  const charCount = value.length;
+  // Calculate dynamic width based on character count.
+  // Base width is for 0-1 chars. Add extra width for each additional char.
+  const baseWidthRem = 1.25;
+  const baseWidthVw = 6;
+  const baseWidthMaxRem = 3.5;
+  
+  const extraWidthPerCharRem = 0.8;
+  const extraWidthPerCharVw = 2;
+  const extraWidthPerCharMaxRem = 1.5;
+
+  const extraChars = Math.max(0, charCount - 1);
+  
+  const dynamicWidth = `clamp(${baseWidthRem + (extraChars * extraWidthPerCharRem)}rem, ${baseWidthVw + (extraChars * extraWidthPerCharVw)}vw, ${baseWidthMaxRem + (extraChars * extraWidthPerCharMaxRem)}rem)`;
+
   return (
     <button
       onClick={() => onClick(idx)}
-      className={`w-[clamp(1.25rem,6vw,3.5rem)] h-[clamp(1.75rem,8vw,4.5rem)] rounded-lg sm:rounded-xl border-2 flex items-center justify-center transition-all duration-200 outline-none font-bold flex-shrink-0 ${
+      style={{ width: dynamicWidth }}
+      className={`h-[clamp(1.75rem,8vw,4.5rem)] rounded-lg sm:rounded-xl border-2 flex items-center justify-center transition-all duration-200 outline-none font-bold flex-shrink-0 ${
         selected
           ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-[0_0_0_4px_rgba(249,115,22,0.15)] scale-110 z-20'
           : value
@@ -873,7 +1475,7 @@ function Gap({ idx, value, selected, onClick }: { idx: number, value: string, se
       }`}
     >
       {value ? (
-        <span className="text-[clamp(1rem,5vw,2.5rem)]">{value}</span>
+        <span className="text-[clamp(1rem,5vw,2.5rem)] whitespace-nowrap px-1">{value}</span>
       ) : (
         <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 md:w-2 md:h-2 rounded-full bg-zinc-300 dark:bg-zinc-700"></span>
       )}
@@ -881,7 +1483,7 @@ function Gap({ idx, value, selected, onClick }: { idx: number, value: string, se
   );
 }
 
-function OperatorButton({ op, icon, onClick, variant = 'default' }: { op: string, icon: React.ReactNode, onClick: () => void, variant?: 'default' | 'danger' }) {
+function OperatorButton({ icon, onClick, variant = 'default' }: { op: string, icon: React.ReactNode, onClick: () => void, variant?: 'default' | 'danger' }) {
   return (
     <button
       onClick={onClick}

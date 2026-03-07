@@ -1,5 +1,5 @@
 {
-  "name": "MAKE100",
-  "description": "A math puzzle game where you place operators between 6 random digits to reach exactly 100.",
+  "name": "Make100",
+  "description": "A lucky ticket app",
   "requestFramePermissions": []
 }
