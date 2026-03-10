@@ -2,6 +2,21 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
+import car1 from './assets/cars/1.jpg';
+import car2 from './assets/cars/2.jpg';
+import car3 from './assets/cars/3.jpg';
+import car4 from './assets/cars/4.jpg';
+import car5 from './assets/cars/5.jpg';
+import car6 from './assets/cars/6.jpg';
+import car7 from './assets/cars/7.jpg';
+import car8 from './assets/cars/8.jpg';
+import car9 from './assets/cars/9.jpg';
+import car10 from './assets/cars/10.jpg';
+
+const CAR_IMAGES_LIST = [
+  car1, car2, car3, car4, car5, car6, car7, car8, car9, car10
+];
+
 // AI image generation removed as per user request
 
 // Start fetching immediately when the app mounts
@@ -19,6 +34,9 @@ interface TelegramUser {
 const TRANSLATIONS = {
   ru: {
     title: "Make100",
+    gameMode: "Режим",
+    car: "Автомобиль",
+    ticket: "Билет",
     solved: "Решено",
     skipped: "Пропущено",
     operators: "Знаков",
@@ -42,12 +60,19 @@ const TRANSLATIONS = {
     vibration: "Вибро",
     tapGaps: "Нажимайте на промежутки и вставляйте знаки",
     skipTicket: "Пропустить билет",
+    skipCar: "Пропустить номер",
     introText: "Соберите 100 из цифр на билете, используя математические знаки.",
     start: "Старт",
     perfect: "Идеально!",
     solvedIn: "Решено за:",
     operatorsUsed: "Использовано знаков:",
     nextTicket: "Следующий билет",
+    nextCar: "Следующий номер",
+    leaderboard: "Рейтинг",
+    rank: "Место",
+    player: "Игрок",
+    score: "Счет",
+    close: "Закрыть",
     tickets: {
       flight: { title: 'ПОСАДОЧНЫЙ ТАЛОН', subtitle: 'ПЕРВЫЙ КЛАСС', footerLeft: 'ГЕЙТ 14', footerRight: 'МЕСТО 2А' },
       concert: { title: 'LIVE КОНЦЕРТ', subtitle: 'VIP ДОСТУП', footerLeft: 'МИРОВОЙ ТУР', footerRight: 'РЯД 1' },
@@ -63,6 +88,9 @@ const TRANSLATIONS = {
   },
   en: {
     title: "Make100",
+    gameMode: "Mode",
+    car: "Car",
+    ticket: "Ticket",
     solved: "Solved",
     skipped: "Skipped",
     operators: "Operators",
@@ -86,12 +114,19 @@ const TRANSLATIONS = {
     vibration: "Vibration",
     tapGaps: "Tap the gaps and insert operators",
     skipTicket: "Skip ticket",
+    skipCar: "Skip car",
     introText: "Make 100 from the digits on the ticket using mathematical operators.",
     start: "Start",
     perfect: "Perfect!",
     solvedIn: "Solved in:",
     operatorsUsed: "Operators used:",
     nextTicket: "Next ticket",
+    nextCar: "Next car",
+    leaderboard: "Leaderboard",
+    rank: "Rank",
+    player: "Player",
+    score: "Score",
+    close: "Close",
     tickets: {
       flight: { title: 'BOARDING PASS', subtitle: 'FIRST CLASS', footerLeft: 'GATE 14', footerRight: 'SEAT 2A' },
       concert: { title: 'LIVE CONCERT', subtitle: 'VIP ACCESS', footerLeft: 'WORLD TOUR', footerRight: 'ROW 1' },
@@ -107,6 +142,9 @@ const TRANSLATIONS = {
   },
   de: {
     title: "Make100",
+    gameMode: "Modus",
+    car: "Auto",
+    ticket: "Ticket",
     solved: "Gelöst",
     skipped: "Übersprungen",
     operators: "Zeichen",
@@ -130,12 +168,19 @@ const TRANSLATIONS = {
     vibration: "Vibration",
     tapGaps: "Tippen Sie auf die Lücken und fügen Sie Zeichen ein",
     skipTicket: "Ticket überspringen",
+    skipCar: "Auto überspringen",
     introText: "Erreichen Sie 100 aus den Ziffern auf dem Ticket mit mathematischen Zeichen.",
     start: "Start",
     perfect: "Perfekt!",
     solvedIn: "Gelöst in:",
     operatorsUsed: "Verwendete Zeichen:",
     nextTicket: "Nächstes Ticket",
+    nextCar: "Nächstes Auto",
+    leaderboard: "Bestenliste",
+    rank: "Rang",
+    player: "Spieler",
+    score: "Punktzahl",
+    close: "Schließen",
     tickets: {
       flight: { title: 'BORDKARTE', subtitle: 'ERSTE KLASSE', footerLeft: 'GATE 14', footerRight: 'SITZ 2A' },
       concert: { title: 'LIVE-KONZERT', subtitle: 'VIP-ZUGANG', footerLeft: 'WELTTOURNEE', footerRight: 'REIHE 1' },
@@ -151,6 +196,9 @@ const TRANSLATIONS = {
   },
   fr: {
     title: "Make100",
+    gameMode: "Mode",
+    car: "Voiture",
+    ticket: "Billet",
     solved: "Résolu",
     skipped: "Passé",
     operators: "Signes",
@@ -174,12 +222,19 @@ const TRANSLATIONS = {
     vibration: "Vibration",
     tapGaps: "Appuyez sur les espaces et insérez des signes",
     skipTicket: "Passer le billet",
+    skipCar: "Passer la voiture",
     introText: "Faites 100 à partir des chiffres sur le billet en utilisant des signes mathématiques.",
     start: "Démarrer",
     perfect: "Parfait!",
     solvedIn: "Résolu en:",
     operatorsUsed: "Signes utilisés:",
     nextTicket: "Billet suivant",
+    nextCar: "Voiture suivante",
+    leaderboard: "Classement",
+    rank: "Rang",
+    player: "Joueur",
+    score: "Score",
+    close: "Fermer",
     tickets: {
       flight: { title: 'CARTE D\'EMBARQUEMENT', subtitle: 'PREMIÈRE CLASSE', footerLeft: 'PORTE 14', footerRight: 'SIÈGE 2A' },
       concert: { title: 'CONCERT LIVE', subtitle: 'ACCÈS VIP', footerLeft: 'TOURNÉE MONDIALE', footerRight: 'RANG 1' },
@@ -195,6 +250,9 @@ const TRANSLATIONS = {
   },
   pt: {
     title: "Make100",
+    gameMode: "Modo",
+    car: "Carro",
+    ticket: "Bilhete",
     solved: "Resolvido",
     skipped: "Pulado",
     operators: "Sinais",
@@ -218,12 +276,19 @@ const TRANSLATIONS = {
     vibration: "Vibração",
     tapGaps: "Toque nos espaços e insira os sinais",
     skipTicket: "Pular bilhete",
+    skipCar: "Pular carro",
     introText: "Faça 100 a partir dos dígitos no bilhete usando sinais matemáticos.",
     start: "Iniciar",
     perfect: "Perfeito!",
     solvedIn: "Resolvido em:",
     operatorsUsed: "Sinais usados:",
     nextTicket: "Próximo bilhete",
+    nextCar: "Próximo carro",
+    leaderboard: "Classificação",
+    rank: "Posição",
+    player: "Jogador",
+    score: "Pontuação",
+    close: "Fechar",
     tickets: {
       flight: { title: 'CARTÃO DE EMBARQUE', subtitle: 'PRIMEIRA CLASSE', footerLeft: 'PORTÃO 14', footerRight: 'ASSENTO 2A' },
       concert: { title: 'CONCERTO AO VIVO', subtitle: 'ACESSO VIP', footerLeft: 'TURNÊ MUNDIAL', footerRight: 'FILA 1' },
@@ -239,6 +304,9 @@ const TRANSLATIONS = {
   },
   es: {
     title: "Make100",
+    gameMode: "Modo",
+    car: "Coche",
+    ticket: "Boleto",
     solved: "Resuelto",
     skipped: "Saltado",
     operators: "Signos",
@@ -262,12 +330,19 @@ const TRANSLATIONS = {
     vibration: "Vibración",
     tapGaps: "Toca los espacios e inserta los signos",
     skipTicket: "Saltar boleto",
+    skipCar: "Saltar coche",
     introText: "Haz 100 a partir de los dígitos en el boleto usando signos matemáticos.",
     start: "Empezar",
     perfect: "¡Perfecto!",
     solvedIn: "Resuelto en:",
     operatorsUsed: "Signos usados:",
     nextTicket: "Siguiente boleto",
+    nextCar: "Siguiente coche",
+    leaderboard: "Clasificación",
+    rank: "Rango",
+    player: "Jugador",
+    score: "Puntuación",
+    close: "Cerrar",
     tickets: {
       flight: { title: 'TARJETA DE EMBARQUE', subtitle: 'PRIMERA CLASSE', footerLeft: 'PUERTA 14', footerRight: 'ASIENTO 2A' },
       concert: { title: 'CONCIERTO EN VIVO', subtitle: 'ACCESO VIP', footerLeft: 'GIRA MUNDIAL', footerRight: 'FILA 1' },
@@ -283,6 +358,9 @@ const TRANSLATIONS = {
   },
   zh: {
     title: "Make100",
+    gameMode: "模式",
+    car: "汽车",
+    ticket: "门票",
     solved: "已解决",
     skipped: "已跳过",
     operators: "符号",
@@ -306,12 +384,19 @@ const TRANSLATIONS = {
     vibration: "震动",
     tapGaps: "点击空白处并插入符号",
     skipTicket: "跳过门票",
+    skipCar: "跳过汽车",
     introText: "使用数学符号将门票上的数字凑成100。",
     start: "开始",
     perfect: "完美！",
     solvedIn: "解决时间:",
     operatorsUsed: "使用符号:",
     nextTicket: "下一张门票",
+    nextCar: "下一辆汽车",
+    leaderboard: "排行榜",
+    rank: "排名",
+    player: "玩家",
+    score: "分数",
+    close: "关闭",
     tickets: {
       flight: { title: '登机牌', subtitle: '头等舱', footerLeft: '登机口 14', footerRight: '座位 2A' },
       concert: { title: '现场演唱会', subtitle: 'VIP 通道', footerLeft: '世界巡演', footerRight: '第 1 排' },
@@ -327,6 +412,9 @@ const TRANSLATIONS = {
   },
   ja: {
     title: "Make100",
+    gameMode: "モード",
+    car: "車",
+    ticket: "チケット",
     solved: "解決済み",
     skipped: "スキップ",
     operators: "記号",
@@ -350,12 +438,19 @@ const TRANSLATIONS = {
     vibration: "振動",
     tapGaps: "空白をタップして記号を挿入",
     skipTicket: "チケットをスキップ",
+    skipCar: "車をスキップ",
     introText: "数学記号を使用して、チケットの数字から100を作ります。",
     start: "スタート",
     perfect: "完璧！",
     solvedIn: "解決時間:",
     operatorsUsed: "使用した記号:",
     nextTicket: "次のチケット",
+    nextCar: "次の車",
+    leaderboard: "リーダーボード",
+    rank: "ランク",
+    player: "プレイヤー",
+    score: "スコア",
+    close: "閉じる",
     tickets: {
       flight: { title: '搭乗券', subtitle: 'ファーストクラス', footerLeft: 'ゲート 14', footerRight: '座席 2A' },
       concert: { title: 'ライブコンサート', subtitle: 'VIPアクセス', footerLeft: 'ワールドツアー', footerRight: '1列目' },
@@ -371,6 +466,9 @@ const TRANSLATIONS = {
   },
   ko: {
     title: "Make100",
+    gameMode: "모드",
+    car: "자동차",
+    ticket: "티켓",
     solved: "해결됨",
     skipped: "건너뜀",
     operators: "기호",
@@ -394,12 +492,19 @@ const TRANSLATIONS = {
     vibration: "진동",
     tapGaps: "빈칸을 탭하고 기호 삽입",
     skipTicket: "티켓 건너뛰기",
+    skipCar: "자동차 건너뛰기",
     introText: "수학 기호를 사용하여 티켓의 숫자로 100을 만드세요.",
     start: "시작",
     perfect: "완벽해요!",
     solvedIn: "해결 시간:",
     operatorsUsed: "사용된 기호:",
     nextTicket: "다음 티켓",
+    nextCar: "다음 자동차",
+    leaderboard: "리더보드",
+    rank: "순위",
+    player: "플레이어",
+    score: "점수",
+    close: "닫기",
     tickets: {
       flight: { title: '탑승권', subtitle: '일등석', footerLeft: '게이트 14', footerRight: '좌석 2A' },
       concert: { title: '라이브 콘서트', subtitle: 'VIP 입장', footerLeft: '월드 투어', footerRight: '1열' },
@@ -751,6 +856,8 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
 
 export default function App() {
   const [digits, setDigits] = useState<string[]>([]);
+  const [letters, setLetters] = useState<string[]>(['A', 'B', 'C']);
+  const [carImage, setCarImage] = useState<string>('');
   const [gaps, setGaps] = useState<string[]>(['', '', '', '', '', '', '']);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(1);
   const [won, setWon] = useState(false);
@@ -761,6 +868,7 @@ export default function App() {
   const [, setIsTelegram] = useState(false);
   const [tgUser, setTgUser] = useState<TelegramUser | null>(null);
   
+  const [gameMode, setGameMode] = useState<'ticket' | 'car'>('ticket');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [language, setLanguage] = useState<Language>('ru');
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -898,6 +1006,7 @@ export default function App() {
                 setTotalOperatorsUsed(parsed.totalOperatorsUsed || 0);
                 if (parsed.theme) setTheme(parsed.theme);
                 if (parsed.language) setLanguage(parsed.language);
+                if (parsed.gameMode) setGameMode(parsed.gameMode);
                 if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
                 if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
               } catch (e) { console.error(e); }
@@ -921,6 +1030,7 @@ export default function App() {
             setTotalOperatorsUsed(parsed.totalOperatorsUsed || 0);
             if (parsed.theme) setTheme(parsed.theme);
             if (parsed.language) setLanguage(parsed.language);
+            if (parsed.gameMode) setGameMode(parsed.gameMode);
             if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
             if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
           } catch (e) { console.error(e); }
@@ -934,7 +1044,7 @@ export default function App() {
   useEffect(() => {
     if (!statsLoaded) return;
     
-    const stats = { solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, soundEnabled, vibrationEnabled };
+    const stats = { solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, gameMode, soundEnabled, vibrationEnabled };
     const statsStr = JSON.stringify(stats);
     const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
       initData?: string;
@@ -952,7 +1062,7 @@ export default function App() {
     } else {
       localStorage.setItem('make100_stats', statsStr);
     }
-  }, [solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, soundEnabled, vibrationEnabled, statsLoaded]);
+  }, [solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, gameMode, soundEnabled, vibrationEnabled, statsLoaded]);
 
   const initGame = useCallback((startAsIdle = false, isSkip = false) => {
     if (isSkip) {
@@ -966,6 +1076,18 @@ export default function App() {
     
     setDigits(generateSolvableTicket());
 
+    // Generate random letters for the license plate
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const randomLetters = [
+      alphabet[Math.floor(Math.random() * alphabet.length)],
+      alphabet[Math.floor(Math.random() * alphabet.length)],
+      alphabet[Math.floor(Math.random() * alphabet.length)]
+    ];
+    setLetters(randomLetters);
+
+    // Set random car image
+    setCarImage(CAR_IMAGES_LIST[Math.floor(Math.random() * CAR_IMAGES_LIST.length)]);
+
     setGaps(['', '', '', '', '', '', '']);
     setSelectedSlot(1);
     setWon(false);
@@ -977,61 +1099,68 @@ export default function App() {
   }, [playSound, playVibration, language]);
 
   useEffect(() => {
-    // Initialize Telegram Web App
-    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
-      initData?: string;
-      initDataUnsafe?: { user?: TelegramUser };
-      ready: () => void;
-      expand: () => void;
-      setHeaderColor: (color: string) => void;
-      setBackgroundColor: (color: string) => void;
-      BackButton: { onClick: (cb: () => void) => void };
-      close: () => void;
-    } | undefined;
-    if (tg && tg.initData) {
-      setIsTelegram(true);
-      tg.ready();
-      tg.expand();
-      
-      if (tg.initDataUnsafe?.user) {
-        setTgUser(tg.initDataUnsafe.user);
+    let attempts = 0;
+    const initTg = () => {
+      const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
+      if (tg && tg.initData) {
+        setIsTelegram(true);
+        tg.ready();
+        tg.expand();
+        
+        if (tg.initDataUnsafe?.user) {
+          setTgUser(tg.initDataUnsafe.user);
+        }
+        return true;
       }
-      
-      // Set theme based on Telegram settings
-      // We force dark mode, so we don't need to read tg.colorScheme for the app theme
-      
-      // Set header color
+      return false;
+    };
+
+    if (!initTg()) {
+      const interval = setInterval(() => {
+        attempts++;
+        if (initTg() || attempts > 50) { // Try for 5 seconds
+          clearInterval(interval);
+        }
+      }, 100);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
+  useEffect(() => {
+    const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
+    if (tg && tg.initData) {
       try {
         tg.setHeaderColor(theme === 'dark' ? '#09090b' : '#fafafa'); // zinc-950 or zinc-50
         tg.setBackgroundColor(theme === 'dark' ? '#09090b' : '#fafafa');
       } catch (e) {
         console.error("Failed to set Telegram colors", e);
       }
-      
-      // Setup Back Button
-      tg.BackButton.onClick(() => {
-        if (gameState === 'playing') {
-          setGameState('idle');
-        } else {
-          tg.close();
-        }
-      });
     }
-  }, [gameState, theme]);
+  }, [theme, tgUser]);
 
   useEffect(() => {
-    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
-      initData?: string;
-      BackButton: { show: () => void; hide: () => void };
-    } | undefined;
+    const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
     if (tg && tg.initData) {
       if (gameState === 'playing') {
         tg.BackButton.show();
       } else {
         tg.BackButton.hide();
       }
+
+      const handleBack = () => {
+        if (gameState === 'playing') {
+          setGameState('idle');
+        } else {
+          tg.close();
+        }
+      };
+      
+      tg.BackButton.onClick(handleBack);
+      return () => {
+        tg.BackButton.offClick(handleBack);
+      };
     }
-  }, [gameState]);
+  }, [gameState, tgUser]);
 
   useEffect(() => {
     initGame(true);
@@ -1103,18 +1232,103 @@ export default function App() {
       playVibration('success');
       
       // Update statistics
-      setSolvedCount(prev => prev + 1);
-      setTotalSolveTime(prev => prev + elapsedTime);
+      const newSolvedCount = solvedCount + 1;
+      setSolvedCount(newSolvedCount);
+      const newTotalTime = totalSolveTime + elapsedTime;
+      setTotalSolveTime(newTotalTime);
       
       // Count operators used in the winning solution
       const operatorsUsed = gaps.join('').replace(/[0-9.]/g, '').length;
-      setTotalOperatorsUsed(prev => prev + operatorsUsed);
+      const newTotalOperators = totalOperatorsUsed + operatorsUsed;
+      setTotalOperatorsUsed(newTotalOperators);
       
       setSelectedSlot(null);
+
+      // Send detailed results to your Bot's Backend API
+      if (tgUser) {
+        const gameResult = {
+          action: 'game_won',
+          userId: tgUser.id,
+          gameMode: gameMode,
+          timeSpent: elapsedTime,
+          operatorsUsed: operatorsUsed,
+          totalSolved: newSolvedCount,
+          totalTime: newTotalTime,
+          totalOperators: newTotalOperators
+        };
+        
+        // ВАЖНО: Замените этот URL на адрес вашего сервера/бота, 
+        // который будет принимать результаты игры.
+        // Например: 'https://your-bot-domain.com/api/save_result'
+        const BOT_API_URL = 'https://YOUR_BOT_SERVER_URL/api/save_result'; 
+        
+        fetch(BOT_API_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(gameResult)
+        }).catch(e => {
+          console.error('Failed to send data to bot backend:', e);
+        });
+      }
     }
-  }, [isWin, won, elapsedTime, gaps, playSound, playVibration]);
+  }, [isWin, won, elapsedTime, gaps, playSound, playVibration, solvedCount, totalSolveTime, totalOperatorsUsed, tgUser, gameMode]);
 
   if (!digits.length) return null;
+
+  const renderLicensePlate = () => {
+    // A generic, clean CSS-based Russian-style license plate
+    return (
+      <div className="w-full h-full max-h-[650px] max-w-[1000px] mx-auto flex flex-col items-center justify-center gap-4">
+        <div className="w-full h-full min-h-[150px] shrink rounded-2xl overflow-hidden shadow-lg border-4 border-white dark:border-zinc-800 relative bg-zinc-200 dark:bg-zinc-800 flex items-center justify-center">
+          {!carImage && <span className="text-zinc-400">Loading...</span>}
+          {carImage && (
+            <>
+              <img 
+                src={carImage} 
+                alt="Car Exterior" 
+                className="w-full h-full object-cover absolute inset-0"
+                onError={(e) => {
+                  e.currentTarget.style.opacity = '0';
+                  const parent = e.currentTarget.parentElement;
+                  if (parent) {
+                    const errorMsg = document.createElement('span');
+                    errorMsg.className = 'text-red-500 font-bold absolute z-20';
+                    errorMsg.innerText = 'Image load error';
+                    parent.appendChild(errorMsg);
+                  }
+                }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10 pointer-events-none"></div>
+            </>
+          )}
+
+          {/* License Plate Overlay */}
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%] max-w-[280px] bg-white rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-[2px] border-zinc-900 overflow-hidden flex flex-col">
+            <div className="flex items-stretch bg-gradient-to-b from-white to-zinc-100 h-14 sm:h-16">
+              
+              {/* Main number section */}
+              <div className="flex-1 flex items-center justify-center gap-1 px-3 border-r-[2px] border-zinc-900">
+                <span className="font-sans text-lg sm:text-xl font-black text-zinc-900 mt-1">{letters[0]}</span>
+                <span className="font-mono text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">{digits.slice(0, 3).join('')}</span>
+                <span className="font-sans text-lg sm:text-xl font-black text-zinc-900 mt-1">{letters[1]}{letters[2]}</span>
+              </div>
+
+              {/* Region section */}
+              <div className="w-14 sm:w-16 flex flex-col items-center justify-center px-1">
+                <span className="font-mono text-xl sm:text-2xl font-black text-zinc-900">{digits.slice(3).join('')}</span>
+              </div>
+            </div>
+            
+            {/* Screws for main plate (Left and Right edges) */}
+            <div className="absolute top-1/2 -translate-y-1/2 left-1.5 w-1.5 h-1.5 rounded-full bg-zinc-300 border border-zinc-400 shadow-inner flex items-center justify-center"><div className="w-full h-[1px] bg-zinc-500 rotate-12"></div></div>
+            <div className="absolute top-1/2 -translate-y-1/2 right-1.5 w-1.5 h-1.5 rounded-full bg-zinc-300 border border-zinc-400 shadow-inner flex items-center justify-center"><div className="w-full h-[1px] bg-zinc-500 -rotate-12"></div></div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
   const renderTicket = () => {
     const styles = getTicketStyles(t);
@@ -1124,32 +1338,32 @@ export default function App() {
     const tTicket = t.tickets?.[ticketStyle.id as keyof typeof t.tickets] || ticketStyle;
     
     return (
-      <div className={`relative w-full max-w-sm mx-auto overflow-hidden ${ticketStyle.containerClass}`}>
+      <div className={`relative w-full max-w-lg sm:max-w-xl md:max-w-2xl mx-auto overflow-hidden ${ticketStyle.containerClass}`}>
         {/* Watermark / Pattern */}
         <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: ticketStyle.pattern, backgroundSize: '10px 10px' }}></div>
         
-        <div className="flex justify-between items-center mb-4 relative z-10">
+        <div className="flex justify-between items-center mb-6 sm:mb-8 relative z-10">
           <div className="flex items-center gap-2">
-            <Icon className={ticketStyle.iconClass} size={20} />
-            <span className={ticketStyle.labelClass}>{tTicket.title}</span>
+            <Icon className={ticketStyle.iconClass} size={28} />
+            <span className={`${ticketStyle.labelClass} text-base sm:text-lg`}>{tTicket.title}</span>
           </div>
-          <span className={ticketStyle.labelClass}>{tTicket.subtitle}</span>
+          <span className={`${ticketStyle.labelClass} text-base sm:text-lg`}>{tTicket.subtitle}</span>
         </div>
         
-        <div className={`py-6 sm:py-8 flex justify-center items-center relative z-10 ${ticketStyle.numberContainerClass}`}>
-          <span className={`font-mono text-5xl sm:text-6xl font-black tracking-[0.2em] ml-3 ${ticketStyle.numberClass}`}>
+        <div className={`py-10 sm:py-16 md:py-20 flex justify-center items-center relative z-10 ${ticketStyle.numberContainerClass}`}>
+          <span className={`font-mono text-5xl sm:text-6xl md:text-8xl font-black tracking-[0.1em] sm:tracking-[0.2em] ml-1 sm:ml-3 ${ticketStyle.numberClass}`}>
             {numStr}
           </span>
         </div>
         
-        <div className="flex justify-between items-center mt-4 relative z-10">
-          <span className={ticketStyle.footerClass}>{tTicket.footerLeft}</span>
-          <span className={ticketStyle.footerClass}>{tTicket.footerRight}</span>
+        <div className="flex justify-between items-center mt-6 sm:mt-8 relative z-10">
+          <span className={`${ticketStyle.footerClass} text-lg sm:text-xl`}>{tTicket.footerLeft}</span>
+          <span className={`${ticketStyle.footerClass} text-lg sm:text-xl`}>{tTicket.footerRight}</span>
         </div>
         
         {/* Barcode */}
         {ticketStyle.hasBarcode && (
-          <div className="h-10 w-full opacity-40 mt-6 relative z-10" style={{ backgroundImage: 'repeating-linear-gradient(to right, currentColor 0, currentColor 2px, transparent 2px, transparent 4px, currentColor 4px, currentColor 5px, transparent 5px, transparent 8px, currentColor 8px, currentColor 12px, transparent 12px, transparent 14px)' }}></div>
+          <div className="h-14 sm:h-16 w-full opacity-40 mt-8 sm:mt-10 relative z-10" style={{ backgroundImage: 'repeating-linear-gradient(to right, currentColor 0, currentColor 2px, transparent 2px, transparent 4px, currentColor 4px, currentColor 5px, transparent 5px, transparent 8px, currentColor 8px, currentColor 12px, transparent 12px, transparent 14px)' }}></div>
         )}
       </div>
     );
@@ -1160,7 +1374,7 @@ export default function App() {
       <div className={`fixed inset-0 pointer-events-none z-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]`} />
       
       {/* Header */}
-      <header className="w-full max-w-4xl flex justify-between items-center mb-2 sm:mb-4 z-10 flex-shrink-0">
+      <header className="w-full max-w-4xl flex justify-between items-center mb-1 sm:mb-2 z-10 flex-shrink-0">
          <div className="flex items-center gap-3">
             {tgUser ? (
               <div className="flex items-center gap-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 pr-3 pl-1 py-1 rounded-full shadow-sm">
@@ -1180,7 +1394,7 @@ export default function App() {
 
          <div className="flex items-center gap-2">
            <button 
-             onClick={() => setIsMenuOpen(true)}
+             onClick={() => { setIsMenuOpen(true); playSound('click'); playVibration('light'); }}
              className="p-2 rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
            >
              <Menu size={24} />
@@ -1238,6 +1452,25 @@ export default function App() {
               </div>
               
               <div className="p-4 sm:p-6 flex flex-col gap-6 overflow-y-auto">
+                {/* Game Mode */}
+                <div className="flex flex-col gap-3">
+                  <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.gameMode}</span>
+                  <div className="flex bg-zinc-100 dark:bg-zinc-800 p-1 rounded-xl">
+                    <button 
+                      onClick={() => { setGameMode('ticket'); playSound('click'); playVibration('light'); }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${gameMode === 'ticket' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+                    >
+                      {t.ticket}
+                    </button>
+                    <button 
+                      onClick={() => { setGameMode('car'); playSound('click'); playVibration('light'); }}
+                      className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all flex items-center justify-center gap-2 ${gameMode === 'car' ? 'bg-white dark:bg-zinc-700 text-zinc-900 dark:text-white shadow-sm' : 'text-zinc-500 dark:text-zinc-400'}`}
+                    >
+                      {t.car}
+                    </button>
+                  </div>
+                </div>
+
                 {/* Theme */}
                 <div className="flex flex-col gap-3">
                   <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.theme}</span>
@@ -1319,23 +1552,23 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Visual Block (Ticket) */}
-      <div className="flex-1 min-h-0 w-full max-w-4xl flex items-center justify-center mb-2 sm:mb-4 z-10 relative">
+      {/* Visual Block (Ticket or Car) */}
+      <div className="flex-1 min-h-0 w-full max-w-4xl flex items-center justify-center my-1 sm:my-2 z-10 relative">
           <motion.div 
-            key={digits.join('') + 'ticket'}
+            key={digits.join('') + gameMode}
             initial={{ opacity: 0, scale: 0.95, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            className="relative w-full max-w-md max-h-full flex items-center justify-center"
+            className={`relative w-full h-full flex items-center justify-center ${gameMode === 'ticket' ? 'max-w-md' : 'max-w-3xl'}`}
           >
-            <div className="scale-[0.8] sm:scale-100 origin-center w-full">
-              {renderTicket()}
+            <div className={`origin-center w-full h-full flex items-center justify-center ${gameMode === 'ticket' ? 'scale-[0.8] sm:scale-100' : ''}`}>
+              {gameMode === 'ticket' ? renderTicket() : renderLicensePlate()}
             </div>
           </motion.div>
       </div>
 
       <div className="w-full flex flex-col items-center z-10 mt-auto flex-shrink-0">
         {/* Expression Builder */}
-        <div className="w-full max-w-5xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white/30 dark:border-zinc-800/60 p-2 sm:p-4 md:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl mb-2 sm:mb-4 transition-colors flex flex-col items-center">
+        <div className="w-full max-w-5xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white/30 dark:border-zinc-800/60 p-2 sm:p-4 md:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl mb-1 sm:mb-2 transition-colors flex flex-col items-center">
           <div className="flex flex-nowrap justify-center items-center gap-[clamp(0.25rem,1vw,0.75rem)] text-[clamp(1.5rem,6vw,4rem)] font-mono font-black text-zinc-900 dark:text-white py-1 sm:py-2 w-full">
             <Gap idx={0} value={gaps[0]} selected={selectedSlot === 0} onClick={setSelectedSlot} />
             
@@ -1375,7 +1608,7 @@ export default function App() {
           className="mt-2 sm:mt-4 flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-sm sm:text-base"
         >
           <RefreshCw size={18} />
-          {t.skipTicket}
+          {gameMode === 'ticket' ? t.skipTicket : t.skipCar}
         </button>
       </div>
 
@@ -1436,7 +1669,7 @@ export default function App() {
                 onClick={() => initGame(false)}
                 className="w-full py-4 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_20px_rgba(255,255,255,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] hover:-translate-y-1"
               >
-                {t.nextTicket}
+                {gameMode === 'ticket' ? t.nextTicket : t.nextCar}
               </button>
             </motion.div>
           </motion.div>
