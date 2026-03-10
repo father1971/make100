@@ -751,11 +751,11 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
     const sequence = async () => {
       await new Promise(r => setTimeout(r, 2500));
       if (!isMounted) return; setStep(1);
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 2500));
       if (!isMounted) return; setStep(2);
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 3500));
       if (!isMounted) return; setStep(3);
-      await new Promise(r => setTimeout(r, 3000));
+      await new Promise(r => setTimeout(r, 3500));
       if (!isMounted) return; setStep(4);
     };
     sequence();
@@ -786,38 +786,44 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
 
           <div className="flex items-center justify-center gap-0.5 sm:gap-1.5 text-2xl sm:text-4xl font-mono font-black text-zinc-900 dark:text-white mb-6 h-16 w-full px-2">
              <span>9</span>
-             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step === 0 ? 'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 0 || step >= 3 ? 'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
                'w-0 border-0 opacity-0 mx-[-2px] sm:mx-[-4px]'
-             }`}></div>
+             }`}>
+                {step >= 3 && <span className="text-orange-500">*</span>}
+             </div>
              <span>8</span>
-             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step === 2 ? 'border-orange-500 bg-orange-500/20 scale-110' : 
-               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
-               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 2 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' : 
+               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step >= 2 && <span className="text-orange-500">+</span>}
              </div>
              <span>7</span>
-             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
-               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 3 ? 'w-10 sm:w-14 border-orange-500 bg-orange-500/20 scale-110' :
+               step >= 4 ? 'w-10 sm:w-14 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
-                {step >= 3 && <span className="text-orange-500">-</span>}
+                {step === 2 && <span className="text-orange-500">-</span>}
+                {step >= 3 && <span className="text-orange-500 tracking-tighter">*(</span>}
              </div>
              <span>6</span>
-             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
-               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 3 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
+               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
-                {step >= 3 && <span className="text-orange-500">+</span>}
+                {step === 2 && <span className="text-orange-500">+</span>}
+                {step >= 3 && <span className="text-orange-500">-</span>}
              </div>
              <span>5</span>
-             <div className={`w-6 sm:w-10 h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 ${
-               step >= 3 ? 'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
-               'border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 3 ? 'w-10 sm:w-14 border-orange-500 bg-orange-500/20 scale-110' :
+               step >= 4 ? 'w-10 sm:w-14 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
-                {step >= 3 && <span className="text-orange-500">-</span>}
+                {step === 2 && <span className="text-orange-500">-</span>}
+                {step >= 3 && <span className="text-orange-500 tracking-tighter">)*</span>}
              </div>
              <span>4</span>
           </div>
