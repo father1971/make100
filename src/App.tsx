@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react';
 
 // Вставьте сюда ссылку на папку image_cars в вашем GitHub репозитории.
 // Пример: 'https://github.com/ВАШ_ЛОГИН/ВАШ_РЕПОЗИТОРИЙ/tree/main/image_cars'
-const GITHUB_FOLDER_URL: string = 'https://github.com/father1971/make100/tree/main/cars';
+const GITHUB_FOLDER_URL: string = '';
 
 const FALLBACK_IMAGES = [
   'https://picsum.photos/seed/car1/800/600',
