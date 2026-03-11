@@ -2,19 +2,21 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-import car1 from './assets/cars/1.jpg';
-import car2 from './assets/cars/2.jpg';
-import car3 from './assets/cars/3.jpg';
-import car4 from './assets/cars/4.jpg';
-import car5 from './assets/cars/5.jpg';
-import car6 from './assets/cars/6.jpg';
-import car7 from './assets/cars/7.jpg';
-import car8 from './assets/cars/8.jpg';
-import car9 from './assets/cars/9.jpg';
-import car10 from './assets/cars/10.jpg';
+// Вставьте сюда ссылку на папку image_cars в вашем GitHub репозитории.
+// Пример: 'https://github.com/ВАШ_ЛОГИН/ВАШ_РЕПОЗИТОРИЙ/tree/main/image_cars'
+const GITHUB_FOLDER_URL: string = '';
 
-const CAR_IMAGES_LIST = [
-  car1, car2, car3, car4, car5, car6, car7, car8, car9, car10
+const FALLBACK_IMAGES = [
+  'https://picsum.photos/seed/car1/800/600',
+  'https://picsum.photos/seed/car2/800/600',
+  'https://picsum.photos/seed/car3/800/600',
+  'https://picsum.photos/seed/car4/800/600',
+  'https://picsum.photos/seed/car5/800/600',
+  'https://picsum.photos/seed/car6/800/600',
+  'https://picsum.photos/seed/car7/800/600',
+  'https://picsum.photos/seed/car8/800/600',
+  'https://picsum.photos/seed/car9/800/600',
+  'https://picsum.photos/seed/car10/800/600'
 ];
 
 // AI image generation removed as per user request
@@ -750,13 +752,17 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
     let isMounted = true;
     const sequence = async () => {
       await new Promise(r => setTimeout(r, 2500));
-      if (!isMounted) return; setStep(1);
+      if (!isMounted) return; setStep(1); // 98 _ 7 _ 6 _ 5 _ 4
       await new Promise(r => setTimeout(r, 2500));
-      if (!isMounted) return; setStep(2);
+      if (!isMounted) return; setStep(2); // 98 + 7 - 6 + 5 - 4 = 100
       await new Promise(r => setTimeout(r, 3500));
-      if (!isMounted) return; setStep(3);
+      if (!isMounted) return; setStep(3); // Fade out
+      await new Promise(r => setTimeout(r, 500));
+      if (!isMounted) return; setStep(4); // Fade in with 1 2 3 4 1 0
+      await new Promise(r => setTimeout(r, 2500));
+      if (!isMounted) return; setStep(5); // (1 + 2 + 3 + 4) * 10 = 100
       await new Promise(r => setTimeout(r, 3500));
-      if (!isMounted) return; setStep(4);
+      if (!isMounted) return; setStep(6); // Play button
     };
     sequence();
     return () => { isMounted = false; };
@@ -770,6 +776,14 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
     t.demo5
   ];
 
+  const getMessageIndex = (s: number) => {
+    if (s === 0) return 0;
+    if (s === 1) return 1;
+    if (s === 2) return 2;
+    if (s >= 3 && s <= 5) return 3;
+    return 4;
+  };
+
   return (
     <motion.div 
       key="demo"
@@ -780,60 +794,81 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
         <h2 className="text-2xl sm:text-3xl font-black text-zinc-900 dark:text-white mb-6 text-center">{t.demoTitle}</h2>
         
         <div className="bg-zinc-50 dark:bg-zinc-900 p-4 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-zinc-200 dark:border-zinc-800 shadow-2xl w-full flex flex-col items-center relative overflow-hidden">
-          <p className="text-zinc-600 dark:text-zinc-400 text-center h-12 mb-4 font-medium text-sm sm:text-base px-4">
-            {messages[step]}
+          <p className="text-zinc-600 dark:text-zinc-400 text-center h-12 mb-4 font-medium text-sm sm:text-base px-4 transition-opacity duration-300">
+            {messages[getMessageIndex(step)]}
           </p>
 
-          <div className="flex items-center justify-center gap-0.5 sm:gap-1.5 text-2xl sm:text-4xl font-mono font-black text-zinc-900 dark:text-white mb-6 h-16 w-full px-2">
-             <span>9</span>
+          <div className={`flex items-center justify-center gap-0.5 sm:gap-1.5 text-2xl sm:text-4xl font-mono font-black text-zinc-900 dark:text-white mb-6 h-16 w-full px-2 transition-opacity duration-500 ${step === 3 ? 'opacity-0' : 'opacity-100'}`}>
+             {step >= 4 && <div className="text-orange-500 font-black text-3xl sm:text-4xl mr-1">(</div>}
+             
+             <span>{step >= 4 ? '1' : '9'}</span>
+             
+             {/* Gap 1 */}
              <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
-               step === 0 || step >= 3 ? 'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
+               step === 0 ? 'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' : 
+               step === 4 ? 'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               step >= 5 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
                'w-0 border-0 opacity-0 mx-[-2px] sm:mx-[-4px]'
              }`}>
-                {step >= 3 && <span className="text-orange-500">*</span>}
+                {step >= 5 && <span className="text-orange-500">+</span>}
              </div>
-             <span>8</span>
+             
+             <span>{step >= 4 ? '2' : '8'}</span>
+             
+             {/* Gap 2 */}
              <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
                step === 2 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' : 
-               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
-             }`}>
-                {step >= 2 && <span className="text-orange-500">+</span>}
-             </div>
-             <span>7</span>
-             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
-               step === 3 ? 'w-10 sm:w-14 border-orange-500 bg-orange-500/20 scale-110' :
-               step >= 4 ? 'w-10 sm:w-14 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
-               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
-             }`}>
-                {step === 2 && <span className="text-orange-500">-</span>}
-                {step >= 3 && <span className="text-orange-500 tracking-tighter">*(</span>}
-             </div>
-             <span>6</span>
-             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
-               step === 3 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
+               step >= 5 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' : 
                'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step === 2 && <span className="text-orange-500">+</span>}
-                {step >= 3 && <span className="text-orange-500">-</span>}
+                {step >= 5 && <span className="text-orange-500">+</span>}
              </div>
-             <span>5</span>
+             
+             <span>{step >= 4 ? '3' : '7'}</span>
+             
+             {/* Gap 3 */}
              <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
-               step === 3 ? 'w-10 sm:w-14 border-orange-500 bg-orange-500/20 scale-110' :
-               step >= 4 ? 'w-10 sm:w-14 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800' :
+               step === 2 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
+               step >= 5 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
                'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
              }`}>
                 {step === 2 && <span className="text-orange-500">-</span>}
-                {step >= 3 && <span className="text-orange-500 tracking-tighter">)*</span>}
+                {step >= 5 && <span className="text-orange-500">+</span>}
              </div>
-             <span>4</span>
+             
+             <span>{step >= 4 ? '4' : '6'}</span>
+             
+             {/* Gap 4 */}
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 2 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
+               step >= 5 ? 'w-10 sm:w-14 border-orange-500 bg-orange-500/20 scale-110' :
+               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
+             }`}>
+                {step === 2 && <span className="text-orange-500">+</span>}
+                {step >= 5 && <span className="text-orange-500 tracking-tighter">)*</span>}
+             </div>
+             
+             <span>{step >= 4 ? '1' : '5'}</span>
+             
+             {/* Gap 5 */}
+             <div className={`h-8 sm:h-12 border-2 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-500 overflow-hidden ${
+               step === 2 ? 'w-6 sm:w-10 border-orange-500 bg-orange-500/20 scale-110' :
+               step >= 4 ? 'w-0 border-0 opacity-0 mx-[-2px] sm:mx-[-4px]' :
+               'w-6 sm:w-10 border-zinc-300 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800'
+             }`}>
+                {step === 2 && <span className="text-orange-500">-</span>}
+             </div>
+             
+             <span>{step >= 4 ? '0' : '4'}</span>
           </div>
 
-          <div className="text-4xl sm:text-6xl font-black font-mono transition-all duration-500 h-16 flex items-center justify-center">
-             {step >= 4 ? <span className="text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]">= 100</span> : <span className="text-zinc-400 dark:text-zinc-700">= ?</span>}
+          <div className={`text-4xl sm:text-6xl font-black font-mono transition-all duration-500 h-16 flex items-center justify-center ${step === 3 ? 'opacity-0' : 'opacity-100'}`}>
+             {step === 2 || step >= 5 ? <span className="text-green-500 drop-shadow-[0_0_15px_rgba(34,197,94,0.4)]">= 100</span> : <span className="text-zinc-400 dark:text-zinc-700">= ?</span>}
           </div>
 
           <div className="h-16 mt-6 flex items-center justify-center w-full">
-            {step >= 4 ? (
+            {step >= 6 ? (
               <motion.div initial={{scale: 0}} animate={{scale: 1}} className="w-full">
                 <button onClick={onComplete} className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 sm:py-4 rounded-xl sm:rounded-2xl font-black text-lg sm:text-xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)]">
                   {t.play}
@@ -850,7 +885,7 @@ function DemoOverlay({ onComplete, t }: { onComplete: () => void, t: typeof TRAN
           </div>
         </div>
         
-        {step < 4 && (
+        {step < 6 && (
           <button onClick={onComplete} className="mt-4 text-zinc-500 hover:text-zinc-700 dark:hover:text-zinc-300 font-bold px-6 py-2 transition-colors text-sm sm:text-base">
             {t.skipDemo}
           </button>
@@ -864,6 +899,7 @@ export default function App() {
   const [digits, setDigits] = useState<string[]>([]);
   const [letters, setLetters] = useState<string[]>(['A', 'B', 'C']);
   const [carImage, setCarImage] = useState<string>('');
+  const carImagesListRef = useRef<string[]>(FALLBACK_IMAGES);
   const [gaps, setGaps] = useState<string[]>(['', '', '', '', '', '', '']);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(1);
   const [won, setWon] = useState(false);
@@ -882,6 +918,42 @@ export default function App() {
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   
   const t = TRANSLATIONS[language];
+
+  useEffect(() => {
+    if (!GITHUB_FOLDER_URL) return;
+
+    const fetchImages = async () => {
+      try {
+        const match = GITHUB_FOLDER_URL.match(/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)/);
+        if (!match) {
+          console.error('Неверный формат ссылки на GitHub папку.');
+          return;
+        }
+        
+        const [, owner, repo, branch, path] = match;
+        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+        
+        const response = await fetch(apiUrl);
+        if (!response.ok) throw new Error('Ошибка при загрузке данных с GitHub API');
+        
+        const data = await response.json();
+        if (Array.isArray(data)) {
+          const images = data
+            .filter((file: any) => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+            .map((file: any) => file.download_url);
+            
+          if (images.length > 0) {
+            carImagesListRef.current = images;
+            setCarImage(images[Math.floor(Math.random() * images.length)]);
+          }
+        }
+      } catch (err) {
+        console.error('Ошибка при получении картинок с GitHub:', err);
+      }
+    };
+
+    fetchImages();
+  }, []);
 
   useEffect(() => {
     if (theme === 'dark') {
@@ -1092,7 +1164,7 @@ export default function App() {
     setLetters(randomLetters);
 
     // Set random car image
-    setCarImage(CAR_IMAGES_LIST[Math.floor(Math.random() * CAR_IMAGES_LIST.length)]);
+    setCarImage(carImagesListRef.current[Math.floor(Math.random() * carImagesListRef.current.length)]);
 
     setGaps(['', '', '', '', '', '', '']);
     setSelectedSlot(1);
@@ -1295,6 +1367,7 @@ export default function App() {
                 src={carImage} 
                 alt="Car Exterior" 
                 className="w-full h-full object-cover absolute inset-0"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
                   e.currentTarget.style.opacity = '0';
                   const parent = e.currentTarget.parentElement;
