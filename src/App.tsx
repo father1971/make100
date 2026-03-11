@@ -924,14 +924,31 @@ export default function App() {
 
     const fetchImages = async () => {
       try {
-        const match = GITHUB_FOLDER_URL.match(/github\.com\/([^\/]+)\/([^\/]+)\/tree\/([^\/]+)\/(.+)/);
-        if (!match) {
-          console.error('Неверный формат ссылки на GitHub папку.');
+        let apiUrl = '';
+        try {
+          const urlObj = new URL(GITHUB_FOLDER_URL);
+          const pathParts = urlObj.pathname.split('/').filter(Boolean);
+          
+          if (pathParts.length >= 2) {
+            const owner = pathParts[0];
+            const repo = pathParts[1];
+            let branch = 'main';
+            let path = '';
+            
+            if (pathParts.length >= 4 && pathParts[2] === 'tree') {
+              branch = pathParts[3];
+              path = pathParts.slice(4).join('/');
+            }
+            
+            apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
+          } else {
+            console.error('Неверный формат ссылки на GitHub.');
+            return;
+          }
+        } catch (e) {
+          console.error('Неверный URL:', e);
           return;
         }
-        
-        const [, owner, repo, branch, path] = match;
-        const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
         
         const response = await fetch(apiUrl);
         if (!response.ok) throw new Error('Ошибка при загрузке данных с GitHub API');
