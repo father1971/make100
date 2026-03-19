@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "PlayerStats": {
+      "title": "PlayerStats",
+      "description": "Statistics for a player in the game.",
+      "type": "object",
+      "properties": {
+        "telegramId": {
+          "type": "string",
+          "description": "The Telegram user ID of the player."
+        },
+        "firstName": {
+          "type": "string",
+          "description": "The first name of the player."
+        },
+        "lastName": {
+          "type": "string",
+          "description": "The last name of the player."
+        },
+        "username": {
+          "type": "string",
+          "description": "The Telegram username of the player."
+        },
+        "solvedCount": {
+          "type": "number",
+          "description": "Total number of solved tickets."
+        },
+        "unsolvedCount": {
+          "type": "number",
+          "description": "Total number of skipped/unsolved tickets."
+        },
+        "totalSolveTime": {
+          "type": "number",
+          "description": "Total time spent solving tickets in seconds."
+        },
+        "totalOperatorsUsed": {
+          "type": "number",
+          "description": "Total number of operators used."
+        },
+        "lastUpdated": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last update."
+        }
+      },
+      "required": [
+        "telegramId",
+        "firstName",
+        "solvedCount",
+        "unsolvedCount",
+        "totalSolveTime",
+        "totalOperatorsUsed",
+        "lastUpdated"
+      ]
+    }
+  },
+  "firestore": {
+    "/playerStats/{telegramId}": {
+      "schema": {
+        "$ref": "#/entities/PlayerStats"
+      },
+      "description": "Stores statistics for each player, keyed by their Telegram ID."
+    }
+  }
+}

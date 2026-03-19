@@ -1,28 +1,19 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff } from 'lucide-react';
+import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { db, auth } from './firebase';
 
 // Вставьте сюда ссылку на папку image_cars в вашем GitHub репозитории.
 // Пример: 'https://github.com/ВАШ_ЛОГИН/ВАШ_РЕПОЗИТОРИЙ/tree/main/image_cars'
 const GITHUB_FOLDER_URL: string = 'https://github.com/father1971/Cars_image';
 
 const FALLBACK_IMAGES = [
-  'https://picsum.photos/seed/car1/800/600',
-  'https://picsum.photos/seed/car2/800/600',
-  'https://picsum.photos/seed/car3/800/600',
-  'https://picsum.photos/seed/car4/800/600',
-  'https://picsum.photos/seed/car5/800/600',
-  'https://picsum.photos/seed/car6/800/600',
-  'https://picsum.photos/seed/car7/800/600',
-  'https://picsum.photos/seed/car8/800/600',
-  'https://picsum.photos/seed/car9/800/600',
-  'https://picsum.photos/seed/car10/800/600'
+  '/car1.jpg',
+  '/car2.jpg',
+  '/car3.jpg',
+  '/car4.jpg'
 ];
-
-// AI image generation removed as per user request
-
-// Start fetching immediately when the app mounts
-// Removed top-level call
 
 interface TelegramUser {
   id: number;
@@ -31,6 +22,32 @@ interface TelegramUser {
   username?: string;
   language_code?: string;
   photo_url?: string;
+}
+
+interface TelegramWebApp {
+  initData?: string;
+  initDataUnsafe?: {
+    user?: TelegramUser;
+  };
+  ready: () => void;
+  expand: () => void;
+  close: () => void;
+  setHeaderColor: (color: string) => void;
+  setBackgroundColor: (color: string) => void;
+  HapticFeedback?: {
+    impactOccurred: (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft') => void;
+    notificationOccurred: (type: 'error' | 'success' | 'warning') => void;
+  };
+  CloudStorage?: {
+    setItem: (key: string, value: string, callback?: (err: Error | null, success: boolean) => void) => void;
+    getItem: (key: string, callback: (err: Error | null, value: string) => void) => void;
+  };
+  BackButton: {
+    show: () => void;
+    hide: () => void;
+    onClick: (callback: () => void) => void;
+    offClick: (callback: () => void) => void;
+  };
 }
 
 const TRANSLATIONS = {
@@ -63,6 +80,7 @@ const TRANSLATIONS = {
     tapGaps: "Нажимайте на промежутки и вставляйте знаки",
     skipTicket: "Пропустить билет",
     skipCar: "Пропустить номер",
+    hint: "Подсказка",
     introText: "Соберите 100 из цифр на билете, используя математические знаки.",
     start: "Старт",
     perfect: "Идеально!",
@@ -70,10 +88,6 @@ const TRANSLATIONS = {
     operatorsUsed: "Использовано знаков:",
     nextTicket: "Следующий билет",
     nextCar: "Следующий номер",
-    leaderboard: "Рейтинг",
-    rank: "Место",
-    player: "Игрок",
-    score: "Счет",
     close: "Закрыть",
     tickets: {
       flight: { title: 'ПОСАДОЧНЫЙ ТАЛОН', subtitle: 'ПЕРВЫЙ КЛАСС', footerLeft: 'ГЕЙТ 14', footerRight: 'МЕСТО 2А' },
@@ -117,6 +131,7 @@ const TRANSLATIONS = {
     tapGaps: "Tap the gaps and insert operators",
     skipTicket: "Skip ticket",
     skipCar: "Skip car",
+    hint: "Hint",
     introText: "Make 100 from the digits on the ticket using mathematical operators.",
     start: "Start",
     perfect: "Perfect!",
@@ -124,10 +139,6 @@ const TRANSLATIONS = {
     operatorsUsed: "Operators used:",
     nextTicket: "Next ticket",
     nextCar: "Next car",
-    leaderboard: "Leaderboard",
-    rank: "Rank",
-    player: "Player",
-    score: "Score",
     close: "Close",
     tickets: {
       flight: { title: 'BOARDING PASS', subtitle: 'FIRST CLASS', footerLeft: 'GATE 14', footerRight: 'SEAT 2A' },
@@ -171,6 +182,7 @@ const TRANSLATIONS = {
     tapGaps: "Tippen Sie auf die Lücken und fügen Sie Zeichen ein",
     skipTicket: "Ticket überspringen",
     skipCar: "Auto überspringen",
+    hint: "Tipp",
     introText: "Erreichen Sie 100 aus den Ziffern auf dem Ticket mit mathematischen Zeichen.",
     start: "Start",
     perfect: "Perfekt!",
@@ -178,10 +190,6 @@ const TRANSLATIONS = {
     operatorsUsed: "Verwendete Zeichen:",
     nextTicket: "Nächstes Ticket",
     nextCar: "Nächstes Auto",
-    leaderboard: "Bestenliste",
-    rank: "Rang",
-    player: "Spieler",
-    score: "Punktzahl",
     close: "Schließen",
     tickets: {
       flight: { title: 'BORDKARTE', subtitle: 'ERSTE KLASSE', footerLeft: 'GATE 14', footerRight: 'SITZ 2A' },
@@ -225,6 +233,7 @@ const TRANSLATIONS = {
     tapGaps: "Appuyez sur les espaces et insérez des signes",
     skipTicket: "Passer le billet",
     skipCar: "Passer la voiture",
+    hint: "Indice",
     introText: "Faites 100 à partir des chiffres sur le billet en utilisant des signes mathématiques.",
     start: "Démarrer",
     perfect: "Parfait!",
@@ -232,10 +241,6 @@ const TRANSLATIONS = {
     operatorsUsed: "Signes utilisés:",
     nextTicket: "Billet suivant",
     nextCar: "Voiture suivante",
-    leaderboard: "Classement",
-    rank: "Rang",
-    player: "Joueur",
-    score: "Score",
     close: "Fermer",
     tickets: {
       flight: { title: 'CARTE D\'EMBARQUEMENT', subtitle: 'PREMIÈRE CLASSE', footerLeft: 'PORTE 14', footerRight: 'SIÈGE 2A' },
@@ -279,6 +284,7 @@ const TRANSLATIONS = {
     tapGaps: "Toque nos espaços e insira os sinais",
     skipTicket: "Pular bilhete",
     skipCar: "Pular carro",
+    hint: "Dica",
     introText: "Faça 100 a partir dos dígitos no bilhete usando sinais matemáticos.",
     start: "Iniciar",
     perfect: "Perfeito!",
@@ -286,10 +292,6 @@ const TRANSLATIONS = {
     operatorsUsed: "Sinais usados:",
     nextTicket: "Próximo bilhete",
     nextCar: "Próximo carro",
-    leaderboard: "Classificação",
-    rank: "Posição",
-    player: "Jogador",
-    score: "Pontuação",
     close: "Fechar",
     tickets: {
       flight: { title: 'CARTÃO DE EMBARQUE', subtitle: 'PRIMEIRA CLASSE', footerLeft: 'PORTÃO 14', footerRight: 'ASSENTO 2A' },
@@ -333,6 +335,7 @@ const TRANSLATIONS = {
     tapGaps: "Toca los espacios e inserta los signos",
     skipTicket: "Saltar boleto",
     skipCar: "Saltar coche",
+    hint: "Pista",
     introText: "Haz 100 a partir de los dígitos en el boleto usando signos matemáticos.",
     start: "Empezar",
     perfect: "¡Perfecto!",
@@ -340,10 +343,6 @@ const TRANSLATIONS = {
     operatorsUsed: "Signos usados:",
     nextTicket: "Siguiente boleto",
     nextCar: "Siguiente coche",
-    leaderboard: "Clasificación",
-    rank: "Rango",
-    player: "Jugador",
-    score: "Puntuación",
     close: "Cerrar",
     tickets: {
       flight: { title: 'TARJETA DE EMBARQUE', subtitle: 'PRIMERA CLASSE', footerLeft: 'PUERTA 14', footerRight: 'ASIENTO 2A' },
@@ -387,6 +386,7 @@ const TRANSLATIONS = {
     tapGaps: "点击空白处并插入符号",
     skipTicket: "跳过门票",
     skipCar: "跳过汽车",
+    hint: "提示",
     introText: "使用数学符号将门票上的数字凑成100。",
     start: "开始",
     perfect: "完美！",
@@ -394,10 +394,6 @@ const TRANSLATIONS = {
     operatorsUsed: "使用符号:",
     nextTicket: "下一张门票",
     nextCar: "下一辆汽车",
-    leaderboard: "排行榜",
-    rank: "排名",
-    player: "玩家",
-    score: "分数",
     close: "关闭",
     tickets: {
       flight: { title: '登机牌', subtitle: '头等舱', footerLeft: '登机口 14', footerRight: '座位 2A' },
@@ -441,6 +437,7 @@ const TRANSLATIONS = {
     tapGaps: "空白をタップして記号を挿入",
     skipTicket: "チケットをスキップ",
     skipCar: "車をスキップ",
+    hint: "ヒント",
     introText: "数学記号を使用して、チケットの数字から100を作ります。",
     start: "スタート",
     perfect: "完璧！",
@@ -448,10 +445,6 @@ const TRANSLATIONS = {
     operatorsUsed: "使用した記号:",
     nextTicket: "次のチケット",
     nextCar: "次の車",
-    leaderboard: "リーダーボード",
-    rank: "ランク",
-    player: "プレイヤー",
-    score: "スコア",
     close: "閉じる",
     tickets: {
       flight: { title: '搭乗券', subtitle: 'ファーストクラス', footerLeft: 'ゲート 14', footerRight: '座席 2A' },
@@ -495,6 +488,7 @@ const TRANSLATIONS = {
     tapGaps: "빈칸을 탭하고 기호 삽입",
     skipTicket: "티켓 건너뛰기",
     skipCar: "자동차 건너뛰기",
+    hint: "힌트",
     introText: "수학 기호를 사용하여 티켓의 숫자로 100을 만드세요.",
     start: "시작",
     perfect: "완벽해요!",
@@ -502,10 +496,6 @@ const TRANSLATIONS = {
     operatorsUsed: "사용된 기호:",
     nextTicket: "다음 티켓",
     nextCar: "다음 자동차",
-    leaderboard: "리더보드",
-    rank: "순위",
-    player: "플레이어",
-    score: "점수",
     close: "닫기",
     tickets: {
       flight: { title: '탑승권', subtitle: '일등석', footerLeft: '게이트 14', footerRight: '좌석 2A' },
@@ -555,7 +545,7 @@ function calculateResult(digits: string[], gaps: string[]): number {
   }
 }
 
-function hasSolution(digits: string[]): boolean {
+function findSolution(digits: string[]): string[] | null {
   const ops = ['+', '-', '*', '/', ''];
   for (let i = 0; i < 3125; i++) {
     const currentOps = [''];
@@ -566,9 +556,13 @@ function hasSolution(digits: string[]): boolean {
     }
     currentOps.push('');
     const res = calculateResult(digits, currentOps);
-    if (res === 100) return true;
+    if (res === 100) return currentOps;
   }
-  return false;
+  return null;
+}
+
+function hasSolution(digits: string[]): boolean {
+  return findSolution(digits) !== null;
 }
 
 function generateSolvableTicket(): string[] {
@@ -903,11 +897,12 @@ export default function App() {
   const [gaps, setGaps] = useState<string[]>(['', '', '', '', '', '', '']);
   const [selectedSlot, setSelectedSlot] = useState<number | null>(1);
   const [won, setWon] = useState(false);
+  const [isHinting, setIsHinting] = useState(false);
+  const [hintUsed, setHintUsed] = useState(false);
 
   const [ticketStyleId, setTicketStyleId] = useState('flight');
   const [elapsedTime, setElapsedTime] = useState<number>(0);
   const [gameState, setGameState] = useState<'idle' | 'playing'>('idle');
-  const [, setIsTelegram] = useState(false);
   const [tgUser, setTgUser] = useState<TelegramUser | null>(null);
   
   const [gameMode, setGameMode] = useState<'ticket' | 'car'>('ticket');
@@ -956,8 +951,8 @@ export default function App() {
         const data = await response.json();
         if (Array.isArray(data)) {
           const images = data
-            .filter((file: any) => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
-            .map((file: any) => file.download_url);
+            .filter((file: { name: string }) => file.name.match(/\.(jpg|jpeg|png|gif|webp)$/i))
+            .map((file: { download_url: string }) => file.download_url);
             
           if (images.length > 0) {
             carImagesListRef.current = images;
@@ -1080,41 +1075,20 @@ export default function App() {
   const [totalSolveTime, setTotalSolveTime] = useState(0);
   const [totalOperatorsUsed, setTotalOperatorsUsed] = useState(0);
   const [statsLoaded, setStatsLoaded] = useState(false);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
-      initData?: string;
-      CloudStorage?: {
-        getItem: (key: string, callback: (err: Error | null, value: string) => void) => void;
-      }
-    } | undefined;
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsAuthReady(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
     const loadStats = () => {
-      if (tg?.initData && tg?.CloudStorage) {
-        try {
-          tg.CloudStorage.getItem('make100_stats', (err: Error | null, value: string) => {
-            if (!err && value) {
-              try {
-                const parsed = JSON.parse(value);
-                setSolvedCount(parsed.solvedCount || 0);
-                setUnsolvedCount(parsed.unsolvedCount || 0);
-                setTotalSolveTime(parsed.totalSolveTime || 0);
-                setTotalOperatorsUsed(parsed.totalOperatorsUsed || 0);
-                if (parsed.theme) setTheme(parsed.theme);
-                if (parsed.language) setLanguage(parsed.language);
-                if (parsed.gameMode) setGameMode(parsed.gameMode);
-                if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
-                if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
-              } catch (e) { console.error(e); }
-            }
-            setStatsLoaded(true);
-          });
-          // Fallback in case CloudStorage callback never fires
-          setTimeout(() => setStatsLoaded(true), 1000);
-        } catch (e) {
-          console.error("CloudStorage error", e);
-          setStatsLoaded(true);
-        }
-      } else {
+      const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
+      
+      const loadFromLocal = () => {
         const localStats = localStorage.getItem('make100_stats');
         if (localStats) {
           try {
@@ -1128,8 +1102,52 @@ export default function App() {
             if (parsed.gameMode) setGameMode(parsed.gameMode);
             if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
             if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
+            return true;
           } catch (e) { console.error(e); }
         }
+        return false;
+      };
+
+      if (tg?.initData && tg?.CloudStorage) {
+        let callbackFired = false;
+        try {
+          tg.CloudStorage.getItem('make100_stats', (err: Error | null, value: string) => {
+            callbackFired = true;
+            if (!err && value) {
+              try {
+                const parsed = JSON.parse(value);
+                setSolvedCount(parsed.solvedCount || 0);
+                setUnsolvedCount(parsed.unsolvedCount || 0);
+                setTotalSolveTime(parsed.totalSolveTime || 0);
+                setTotalOperatorsUsed(parsed.totalOperatorsUsed || 0);
+                if (parsed.theme) setTheme(parsed.theme);
+                if (parsed.language) setLanguage(parsed.language);
+                if (parsed.gameMode) setGameMode(parsed.gameMode);
+                if (parsed.soundEnabled !== undefined) setSoundEnabled(parsed.soundEnabled);
+                if (parsed.vibrationEnabled !== undefined) setVibrationEnabled(parsed.vibrationEnabled);
+              } catch (e) { 
+                console.error(e); 
+                loadFromLocal();
+              }
+            } else {
+              loadFromLocal();
+            }
+            setStatsLoaded(true);
+          });
+          // Fallback in case CloudStorage callback never fires
+          setTimeout(() => {
+            if (!callbackFired) {
+              loadFromLocal();
+              setStatsLoaded(true);
+            }
+          }, 1000);
+        } catch (e) {
+          console.error("CloudStorage error", e);
+          loadFromLocal();
+          setStatsLoaded(true);
+        }
+      } else {
+        loadFromLocal();
         setStatsLoaded(true);
       }
     };
@@ -1141,23 +1159,62 @@ export default function App() {
     
     const stats = { solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, gameMode, soundEnabled, vibrationEnabled };
     const statsStr = JSON.stringify(stats);
-    const tg = (window as unknown as { Telegram?: { WebApp: unknown } }).Telegram?.WebApp as {
-      initData?: string;
-      CloudStorage?: {
-        setItem: (key: string, value: string) => void;
-      }
-    } | undefined;
     
+    // Always save to localStorage as a fallback
+    localStorage.setItem('make100_stats', statsStr);
+
+    const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
     if (tg?.initData && tg?.CloudStorage) {
       try {
         tg.CloudStorage.setItem('make100_stats', statsStr);
       } catch (e) {
         console.error("CloudStorage save error", e);
       }
-    } else {
-      localStorage.setItem('make100_stats', statsStr);
     }
-  }, [solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, gameMode, soundEnabled, vibrationEnabled, statsLoaded]);
+
+    // Save to Firestore if user is authenticated and we have Telegram user info
+    if (tg?.initDataUnsafe?.user && isAuthReady) {
+      const user = tg.initDataUnsafe.user;
+      const telegramId = String(user.id);
+      
+      const playerStats = {
+        telegramId,
+        firstName: user.first_name,
+        lastName: user.last_name || '',
+        username: user.username || '',
+        solvedCount,
+        unsolvedCount,
+        totalSolveTime,
+        totalOperatorsUsed,
+        lastUpdated: serverTimestamp()
+      };
+
+      setDoc(doc(db, 'playerStats', telegramId), playerStats, { merge: true })
+        .catch(error => console.error("Error saving to Firestore:", error));
+    }
+  }, [solvedCount, unsolvedCount, totalSolveTime, totalOperatorsUsed, theme, language, gameMode, soundEnabled, vibrationEnabled, statsLoaded, isAuthReady]);
+
+  const showHint = async () => {
+    if (isHinting || won) return;
+    const solution = findSolution(digits);
+    if (!solution) return;
+
+    setIsHinting(true);
+    setHintUsed(true);
+    setGaps(['', '', '', '', '', '', '']);
+    setSelectedSlot(null);
+    
+    const newGaps = ['', '', '', '', '', '', ''];
+    for (let i = 1; i <= 5; i++) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      newGaps[i] = solution[i];
+      setGaps([...newGaps]);
+      playSound('click');
+      playVibration('light');
+    }
+    
+    setIsHinting(false);
+  };
 
   const initGame = useCallback((startAsIdle = false, isSkip = false) => {
     if (isSkip) {
@@ -1186,6 +1243,7 @@ export default function App() {
     setGaps(['', '', '', '', '', '', '']);
     setSelectedSlot(1);
     setWon(false);
+    setHintUsed(false);
     
     const styles = getTicketStyles(TRANSLATIONS[language] || TRANSLATIONS['ru']);
     setTicketStyleId(styles[Math.floor(Math.random() * styles.length)].id);
@@ -1196,9 +1254,8 @@ export default function App() {
   useEffect(() => {
     let attempts = 0;
     const initTg = () => {
-      const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
+      const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
       if (tg && tg.initData) {
-        setIsTelegram(true);
         tg.ready();
         tg.expand();
         
@@ -1222,7 +1279,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
+    const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
     if (tg && tg.initData) {
       try {
         tg.setHeaderColor(theme === 'dark' ? '#09090b' : '#fafafa'); // zinc-950 or zinc-50
@@ -1234,7 +1291,7 @@ export default function App() {
   }, [theme, tgUser]);
 
   useEffect(() => {
-    const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
+    const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
     if (tg && tg.initData) {
       if (gameState === 'playing') {
         tg.BackButton.show();
@@ -1320,7 +1377,7 @@ export default function App() {
   const isWin = currentResult === 100;
 
   useEffect(() => {
-    if (isWin && !won) {
+    if (isWin && !won && !hintUsed) {
       setWon(true);
       setGameState('idle');
       playSound('success');
@@ -1338,37 +1395,8 @@ export default function App() {
       setTotalOperatorsUsed(newTotalOperators);
       
       setSelectedSlot(null);
-
-      // Send detailed results to your Bot's Backend API
-      if (tgUser) {
-        const gameResult = {
-          action: 'game_won',
-          userId: tgUser.id,
-          gameMode: gameMode,
-          timeSpent: elapsedTime,
-          operatorsUsed: operatorsUsed,
-          totalSolved: newSolvedCount,
-          totalTime: newTotalTime,
-          totalOperators: newTotalOperators
-        };
-        
-        // ВАЖНО: Замените этот URL на адрес вашего сервера/бота, 
-        // который будет принимать результаты игры.
-        // Например: 'https://your-bot-domain.com/api/save_result'
-        const BOT_API_URL = 'https://YOUR_BOT_SERVER_URL/api/save_result'; 
-        
-        fetch(BOT_API_URL, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(gameResult)
-        }).catch(e => {
-          console.error('Failed to send data to bot backend:', e);
-        });
-      }
     }
-  }, [isWin, won, elapsedTime, gaps, playSound, playVibration, solvedCount, totalSolveTime, totalOperatorsUsed, tgUser, gameMode]);
+  }, [isWin, won, hintUsed, elapsedTime, gaps, playSound, playVibration, solvedCount, totalSolveTime, totalOperatorsUsed, tgUser, gameMode, digits]);
 
   if (!digits.length) return null;
 
@@ -1401,25 +1429,25 @@ export default function App() {
           )}
 
           {/* License Plate Overlay */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[85%] max-w-[280px] bg-white rounded-lg shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-[2px] border-zinc-900 overflow-hidden flex flex-col">
-            <div className="flex items-stretch bg-gradient-to-b from-white to-zinc-100 h-14 sm:h-16">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[60%] max-w-[196px] bg-white rounded-md shadow-[0_10px_30px_rgba(0,0,0,0.5)] border-[2px] border-zinc-900 overflow-hidden flex flex-col">
+            <div className="flex items-stretch bg-gradient-to-b from-white to-zinc-100 h-10 sm:h-11">
               
               {/* Main number section */}
-              <div className="flex-1 flex items-center justify-center gap-1 px-3 border-r-[2px] border-zinc-900">
-                <span className="font-sans text-lg sm:text-xl font-black text-zinc-900 mt-1">{letters[0]}</span>
+              <div className="w-2/3 flex items-center justify-center gap-0.5 px-1 border-r-[2px] border-zinc-900">
+                <span className="font-sans text-xl sm:text-2xl font-black text-zinc-900 mt-0.5">{letters[0]}</span>
                 <span className="font-mono text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">{digits.slice(0, 3).join('')}</span>
-                <span className="font-sans text-lg sm:text-xl font-black text-zinc-900 mt-1">{letters[1]}{letters[2]}</span>
+                <span className="font-sans text-xl sm:text-2xl font-black text-zinc-900 mt-0.5">{letters[1]}{letters[2]}</span>
               </div>
 
               {/* Region section */}
-              <div className="w-14 sm:w-16 flex flex-col items-center justify-center px-1">
-                <span className="font-mono text-xl sm:text-2xl font-black text-zinc-900">{digits.slice(3).join('')}</span>
+              <div className="w-1/3 flex flex-col items-center justify-center px-1">
+                <span className="font-mono text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">{digits.slice(3).join('')}</span>
               </div>
             </div>
             
             {/* Screws for main plate (Left and Right edges) */}
-            <div className="absolute top-1/2 -translate-y-1/2 left-1.5 w-1.5 h-1.5 rounded-full bg-zinc-300 border border-zinc-400 shadow-inner flex items-center justify-center"><div className="w-full h-[1px] bg-zinc-500 rotate-12"></div></div>
-            <div className="absolute top-1/2 -translate-y-1/2 right-1.5 w-1.5 h-1.5 rounded-full bg-zinc-300 border border-zinc-400 shadow-inner flex items-center justify-center"><div className="w-full h-[1px] bg-zinc-500 -rotate-12"></div></div>
+            <div className="absolute top-1/2 -translate-y-1/2 left-1 w-1 h-1 rounded-full bg-zinc-300 border border-zinc-400 shadow-inner flex items-center justify-center"><div className="w-full h-[1px] bg-zinc-500 rotate-12"></div></div>
+            <div className="absolute top-1/2 -translate-y-1/2 right-1 w-1 h-1 rounded-full bg-zinc-300 border border-zinc-400 shadow-inner flex items-center justify-center"><div className="w-full h-[1px] bg-zinc-500 -rotate-12"></div></div>
           </div>
         </div>
       </div>
@@ -1466,7 +1494,7 @@ export default function App() {
   };
 
   return (
-    <div className={`h-[100dvh] ${theme} bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans overflow-hidden relative flex flex-col items-center p-2 sm:p-4 md:p-6`}>
+    <div className={`h-[100dvh] ${theme} bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans overflow-y-auto overflow-x-hidden relative flex flex-col items-center px-1 py-2 sm:p-4 md:p-6`}>
       <div className={`fixed inset-0 pointer-events-none z-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]`} />
       
       {/* Header */}
@@ -1642,6 +1670,10 @@ export default function App() {
                     ))}
                   </div>
                 </div>
+
+                <div className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-600 font-mono">
+                  v1.1
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1664,13 +1696,13 @@ export default function App() {
 
       <div className="w-full flex flex-col items-center z-10 mt-auto flex-shrink-0">
         {/* Expression Builder */}
-        <div className="w-full max-w-5xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white/30 dark:border-zinc-800/60 p-2 sm:p-4 md:p-6 rounded-2xl sm:rounded-[2rem] shadow-2xl mb-1 sm:mb-2 transition-colors flex flex-col items-center">
-          <div className="flex flex-nowrap justify-center items-center gap-[clamp(0.25rem,1vw,0.75rem)] text-[clamp(1.5rem,6vw,4rem)] font-mono font-black text-zinc-900 dark:text-white py-1 sm:py-2 w-full">
+        <div className="w-full max-w-5xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-2xl border border-white/30 dark:border-zinc-800/60 p-1 sm:p-4 md:p-6 rounded-xl sm:rounded-[2rem] shadow-2xl mb-1 sm:mb-2 transition-colors flex flex-col items-center overflow-hidden">
+          <div className="flex flex-nowrap justify-center items-center gap-x-[clamp(0.1rem,0.5vw,0.5rem)] text-[clamp(1.5rem,7vw,4rem)] font-mono font-black text-zinc-900 dark:text-white py-1 sm:py-2 w-full">
             <Gap idx={0} value={gaps[0]} selected={selectedSlot === 0} onClick={setSelectedSlot} />
             
             {digits.map((digit, idx) => (
               <React.Fragment key={idx}>
-                <span className="text-zinc-800 dark:text-zinc-200 drop-shadow-sm select-none flex-shrink-0">{digit}</span>
+                <span className="text-zinc-800 dark:text-zinc-200 drop-shadow-sm select-none flex-shrink-0 leading-none">{digit}</span>
                 <Gap idx={idx + 1} value={gaps[idx + 1]} selected={selectedSlot === idx + 1} onClick={setSelectedSlot} />
               </React.Fragment>
             ))}
@@ -1698,14 +1730,30 @@ export default function App() {
           <OperatorButton op="Backspace" icon={<Delete size={20} strokeWidth={2.5} />} onClick={() => handleOp('Backspace')} variant="danger" />
         </div>
 
-        {/* Skip Button */}
-        <button 
-          onClick={() => initGame(false, true)}
-          className="mt-2 sm:mt-4 flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-sm sm:text-base"
-        >
-          <RefreshCw size={18} />
-          {gameMode === 'ticket' ? t.skipTicket : t.skipCar}
-        </button>
+        {/* Action Buttons */}
+        <div className="mt-2 sm:mt-4 w-full max-w-lg grid grid-cols-2 gap-2 sm:gap-3 shrink-0 z-10 pb-2">
+          <button 
+            onClick={showHint}
+            disabled={isHinting || won}
+            className={`flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-xs sm:text-base ${isHinting || won ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <Lightbulb size={16} className={`shrink-0 ${isHinting ? "animate-pulse text-yellow-500" : ""}`} />
+            <span className="truncate">{t.hint}</span>
+          </button>
+
+          <button 
+            onClick={() => initGame(false, true)}
+            disabled={isHinting}
+            className={`flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-xs sm:text-base ${isHinting ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <RefreshCw size={16} className={`shrink-0 ${isHinting ? "animate-spin" : ""}`} />
+            <span className="truncate">
+              {hintUsed 
+                ? (gameMode === 'ticket' ? t.nextTicket : t.nextCar)
+                : (gameMode === 'ticket' ? t.skipTicket : t.skipCar)}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Modals */}
@@ -1780,7 +1828,7 @@ function Gap({ idx, value, selected, onClick }: { idx: number, value: string, se
   // Calculate dynamic width based on character count.
   // Base width is for 0-1 chars. Add extra width for each additional char.
   const baseWidthRem = 1.25;
-  const baseWidthVw = 6;
+  const baseWidthVw = 7;
   const baseWidthMaxRem = 3.5;
   
   const extraWidthPerCharRem = 0.8;
@@ -1795,7 +1843,7 @@ function Gap({ idx, value, selected, onClick }: { idx: number, value: string, se
     <button
       onClick={() => onClick(idx)}
       style={{ width: dynamicWidth }}
-      className={`h-[clamp(1.75rem,8vw,4.5rem)] rounded-lg sm:rounded-xl border-2 flex items-center justify-center transition-all duration-200 outline-none font-bold flex-shrink-0 ${
+      className={`h-[clamp(1.75rem,9vw,4.5rem)] rounded-lg sm:rounded-xl border-2 flex items-center justify-center transition-all duration-200 outline-none font-bold flex-shrink-0 ${
         selected
           ? 'border-orange-500 bg-orange-50 dark:bg-orange-500/10 text-orange-600 dark:text-orange-400 shadow-[0_0_0_4px_rgba(249,115,22,0.15)] scale-110 z-20'
           : value
