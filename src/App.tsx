@@ -1510,9 +1510,13 @@ export default function App() {
                   </div>
                 )}
                 <span className="text-sm font-bold text-zinc-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">{tgUser.first_name}</span>
+                <span className="text-[10px] font-mono text-orange-500 font-bold ml-1">v1.3</span>
               </div>
             ) : (
-              <h1 className="text-3xl font-black tracking-tighter text-zinc-900 dark:text-white drop-shadow-md">Make100</h1>
+              <div className="flex items-baseline gap-2">
+                <h1 className="text-3xl font-black tracking-tighter text-zinc-900 dark:text-white drop-shadow-md">Make100</h1>
+                <span className="text-xs font-mono text-orange-500 font-bold">v1.3</span>
+              </div>
             )}
          </div>
 
@@ -1672,7 +1676,7 @@ export default function App() {
                 </div>
 
                 <div className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-600 font-mono">
-                  v1.1
+                  v1.3
                 </div>
               </div>
             </motion.div>
