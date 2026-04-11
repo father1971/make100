@@ -1,7 +1,7 @@
 {
   "name": "Lucky Ticket",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.7.0",
   "type": "module",
   "scripts": {
     "dev": "tsx server.ts",
@@ -12,7 +12,8 @@
   },
   "dependencies": {
     "express": "^5.2.1",
-    "firebase": "^12.10.0",
+    "firebase": "^12.11.0",
+    "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.344.0",
     "motion": "^11.11.0",
     "react": "^18.2.0",
@@ -20,6 +21,7 @@
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@typescript-eslint/eslint-plugin": "^7.2.0",

@@ -1,10 +1,151 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import path from "path";
+
+const PORT = 3000;
+const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  
+  app.use(express.json());
+
+  // API routes
+  app.post("/api/auth/telegram", (req, res) => {
+    const { initData } = req.body;
+
+    if (!initData) {
+      return res.status(400).json({ error: "initData is required" });
+    }
+
+    if (!TELEGRAM_BOT_TOKEN) {
+      console.warn("TELEGRAM_BOT_TOKEN is not set. Skipping validation for development.");
+      // In a real app, you should return 500 here.
+      // For preview purposes, we'll generate a token anyway if the bot token is missing,
+      // but we'll log a warning.
+      const token = jwt.sign({ mock: true }, JWT_SECRET, { expiresIn: '1h' });
+      return res.json({ token, message: "Warning: Validation skipped due to missing TELEGRAM_BOT_TOKEN" });
+    }
+
+    try {
+      const urlParams = new URLSearchParams(initData);
+      const hash = urlParams.get('hash');
+      urlParams.delete('hash');
+
+      const dataCheckArr: string[] = [];
+      for (const [key, value] of urlParams.entries()) {
+        dataCheckArr.push(`${key}=${value}`);
+      }
+      dataCheckArr.sort();
+      const dataCheckString = dataCheckArr.join('\n');
+
+      const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TELEGRAM_BOT_TOKEN).digest();
+      const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+
+      if (calculatedHash !== hash) {
+        return res.status(401).json({ error: "Invalid signature" });
+      }
+
+      const authDate = parseInt(urlParams.get('auth_date') || '0', 10);
+      const now = Math.floor(Date.now() / 1000);
+      const FIVE_MINUTES = 5 * 60;
+
+      if (now - authDate > FIVE_MINUTES) {
+        return res.status(401).json({ error: "Session expired (auth_date is too old)", code: "SESSION_EXPIRED" });
+      }
+
+      // Validation successful, extract user info
+      const userStr = urlParams.get('user');
+      let user = null;
+      if (userStr) {
+        try {
+          user = JSON.parse(userStr);
+        } catch (e) {
+          console.error("Failed to parse user JSON", e);
+        }
+      }
+
+      // Generate JWT
+      const token = jwt.sign(
+        { 
+          tgId: user?.id,
+          username: user?.username,
+          authDate
+        }, 
+        JWT_SECRET, 
+        { expiresIn: '30m' } // Short-lived token as requested
+      );
+
+      res.json({ token, user });
+    } catch (error) {
+      console.error("Validation error:", error);
+      res.status(500).json({ error: "Internal server error during validation" });
+    }
+  });
+
+  app.post("/api/share", async (req, res) => {
+    const { userId, solvedCount } = req.body;
+
+    if (!userId || solvedCount === undefined) {
+      return res.status(400).json({ error: "userId and solvedCount are required" });
+    }
+
+    if (!TELEGRAM_BOT_TOKEN) {
+      return res.status(500).json({ error: "TELEGRAM_BOT_TOKEN is not set" });
+    }
+
+    try {
+      const result = {
+        type: "article",
+        id: `score_${userId}_${Date.now()}`,
+        title: "Make100 Score",
+        description: `I solved ${solvedCount} tickets!`,
+        input_message_content: {
+          message_text: `I solved ${solvedCount} tickets in Make100! Can you beat me?`
+        },
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "Play Make100",
+                url: "https://t.me/make100_bot/app"
+              }
+            ]
+          ]
+        }
+      };
+
+      const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/savePreparedInlineMessage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId,
+          result: result,
+          allow_user_chats: true,
+          allow_bot_chats: true,
+          allow_group_chats: true,
+          allow_channel_chats: true
+        })
+      });
+
+      const data = await response.json();
+
+      if (!data.ok) {
+        console.error("Telegram API Error:", data);
+        return res.status(500).json({ error: data.description || "Failed to save prepared message" });
+      }
+
+      res.json({ id: data.result.id });
+    } catch (error) {
+      console.error("Share error:", error);
+      res.status(500).json({ error: "Internal server error during share preparation" });
+    }
+  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
@@ -14,10 +155,10 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    // In production, serve static files from dist
-    app.use(express.static(path.join(process.cwd(), "dist")));
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+    const distPath = path.join(process.cwd(), 'dist');
+    app.use(express.static(distPath));
+    app.get('*all', (req, res) => {
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   }
 

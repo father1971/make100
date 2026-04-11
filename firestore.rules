@@ -1,69 +1,84 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
     // ===============================================================
     // Assumed Data Model
     // ===============================================================
     //
-    // Collection: playerStats
-    // Document ID: {telegramId}
+    // Collection: users
+    // Document ID: {userId}
     // Fields:
-    //   - telegramId: string (required) - The Telegram user ID
-    //   - firstName: string (required) - The first name of the player
-    //   - lastName: string (optional) - The last name of the player
-    //   - username: string (optional) - The Telegram username
-    //   - solvedCount: number (required) - Total solved tickets
-    //   - unsolvedCount: number (required) - Total skipped tickets
-    //   - totalSolveTime: number (required) - Total time spent solving
-    //   - totalOperatorsUsed: number (required) - Total operators used
-    //   - lastUpdated: timestamp (required) - When the stats were last updated
+    //   - solvedCount: number
+    //   - unsolvedCount: number
+    //   - totalSolveTime: number
+    //   - totalOperatorsUsed: number
+    //   - theme: string
+    //   - language: string
+    //   - gameMode: string
+    //   - soundEnabled: boolean
+    //   - vibrationEnabled: boolean
+    //
+    // Collection: public_stats
+    // Document ID: {userId}
+    // Fields:
+    //   - solvedCount: number
+    //   - unsolvedCount: number
+    //   - totalSolveTime: number
+    //   - totalOperatorsUsed: number
+    //   - displayName: string
+    //   - photoURL: string
     //
     // ===============================================================
 
-    // ===============================================================
     // Helper Functions
-    // ===============================================================
-    
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    function hasRequiredFields(fields) {
-      return request.resource.data.keys().hasAll(fields);
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
     }
-    
-    function isValidOptionalString(field, minLen, maxLen) {
-      return !(field in request.resource.data) ||
-             (request.resource.data[field] is string &&
-              request.resource.data[field].size() >= minLen &&
-              request.resource.data[field].size() <= maxLen);
-    }
-    
-    function isValidPlayerStats() {
+
+    function isValidUserStats() {
       let data = request.resource.data;
-      return hasRequiredFields(['telegramId', 'firstName', 'solvedCount', 'unsolvedCount', 'totalSolveTime', 'totalOperatorsUsed', 'lastUpdated']) &&
-             data.telegramId is string && data.telegramId.size() > 0 && data.telegramId.size() < 100 &&
-             data.firstName is string && data.firstName.size() > 0 && data.firstName.size() < 100 &&
-             isValidOptionalString('lastName', 0, 100) &&
-             isValidOptionalString('username', 0, 100) &&
-             data.solvedCount is number && data.solvedCount >= 0 &&
-             data.unsolvedCount is number && data.unsolvedCount >= 0 &&
-             data.totalSolveTime is number && data.totalSolveTime >= 0 &&
-             data.totalOperatorsUsed is number && data.totalOperatorsUsed >= 0 &&
-             data.lastUpdated is timestamp;
+      return (
+        (!('solvedCount' in data) || data.solvedCount is number) &&
+        (!('unsolvedCount' in data) || data.unsolvedCount is number) &&
+        (!('totalSolveTime' in data) || data.totalSolveTime is number) &&
+        (!('totalOperatorsUsed' in data) || data.totalOperatorsUsed is number) &&
+        (!('theme' in data) || data.theme is string) &&
+        (!('language' in data) || data.language is string) &&
+        (!('gameMode' in data) || data.gameMode is string) &&
+        (!('soundEnabled' in data) || data.soundEnabled is bool) &&
+        (!('vibrationEnabled' in data) || data.vibrationEnabled is bool)
+      );
     }
 
-    // ===============================================================
-    // Rules
-    // ===============================================================
+    function isValidPublicStats() {
+      let data = request.resource.data;
+      return (
+        (!('solvedCount' in data) || data.solvedCount is number) &&
+        (!('unsolvedCount' in data) || data.unsolvedCount is number) &&
+        (!('totalSolveTime' in data) || data.totalSolveTime is number) &&
+        (!('totalOperatorsUsed' in data) || data.totalOperatorsUsed is number) &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+        (!('tgUserId' in data) || data.tgUserId == null || data.tgUserId is number)
+      );
+    }
 
-    match /playerStats/{telegramId} {
-      // Allow read/write if the user is authenticated anonymously.
-      // We use the telegramId as the document ID.
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidPlayerStats() && request.resource.data.telegramId == telegramId;
-      allow update: if isAuthenticated() && isValidPlayerStats() && request.resource.data.telegramId == telegramId;
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidUserStats();
+      allow update: if isOwner(userId) && isValidUserStats();
+      allow delete: if false; // Users cannot delete their stats document
+    }
+
+    match /public_stats/{userId} {
+      allow read: if true; // Public leaderboard
+      allow create: if isOwner(userId) && isValidPublicStats();
+      allow update: if isOwner(userId) && isValidPublicStats();
+      allow delete: if false;
     }
   }
 }
