@@ -2062,17 +2062,26 @@ export default function App() {
       return;
     }
 
-    if (!tgUser?.id) {
-      // Fallback if no user ID
+    const fallbackShare = () => {
       const text = `I solved ${solvedCount} tickets in Make100! Can you beat me?`;
       const url = `https://t.me/make100_bot/app`;
       if (tg?.switchInlineQuery) {
-        tg.switchInlineQuery(text, ['choose_chat']);
+        try {
+          tg.switchInlineQuery(text, ['users', 'groups', 'channels']);
+        } catch (e) {
+          if (tg?.openTelegramLink) {
+            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
+          }
+        }
       } else if (tg?.openTelegramLink) {
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
       } else {
         window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
       }
+    };
+
+    if (!tgUser?.id) {
+      fallbackShare();
       return;
     }
 
@@ -2087,20 +2096,18 @@ export default function App() {
       const data = await response.json();
       
       if (data.id && tg?.shareMessage) {
-        tg.shareMessage(data.id);
-      } else {
-        // Fallback if shareMessage fails or is not available
-        const text = `I solved ${solvedCount} tickets in Make100! Can you beat me?`;
-        if (tg?.switchInlineQuery) {
-          tg.switchInlineQuery(text, ['choose_chat']);
+        try {
+          tg.shareMessage(data.id);
+        } catch (e) {
+          console.error("shareMessage failed:", e);
+          fallbackShare();
         }
+      } else {
+        fallbackShare();
       }
     } catch (error) {
       console.error("Error sharing:", error);
-      const text = `I solved ${solvedCount} tickets in Make100! Can you beat me?`;
-      if (tg?.switchInlineQuery) {
-        tg.switchInlineQuery(text, ['choose_chat']);
-      }
+      fallbackShare();
     } finally {
       setIsSharing(false);
     }
@@ -2114,11 +2121,13 @@ export default function App() {
   const [statsLoaded, setStatsLoaded] = useState(false);
 
   // Demo State
-  const [showDemo, setShowDemo] = useState(false);
+  const [showDemo, setShowDemo] = useState(true);
 
   useEffect(() => {
-    if (statsLoaded && !hasSeenOnboarding && solvedCount === 0) {
-      setShowDemo(true);
+    if (statsLoaded) {
+      if (hasSeenOnboarding || solvedCount > 0) {
+        setShowDemo(false);
+      }
     }
   }, [statsLoaded, hasSeenOnboarding, solvedCount]);
 
@@ -2336,7 +2345,6 @@ export default function App() {
     const solution = findSolution(digits);
     if (!solution) {
       setNoSolutionMessage(true);
-      setTimeout(() => setNoSolutionMessage(false), 3000);
       return;
     }
 
@@ -2362,6 +2370,7 @@ export default function App() {
   };
 
   const initGame = useCallback((startAsIdle = false, isSkip = false) => {
+    setNoSolutionMessage(false);
     if (isSkip) {
       setUnsolvedCount(prev => prev + 1);
       playSound('skip');
@@ -2781,8 +2790,10 @@ export default function App() {
     >
       <div className={`fixed inset-0 pointer-events-none z-0 bg-[linear-gradient(to_right,#0000000a_1px,transparent_1px),linear-gradient(to_bottom,#0000000a_1px,transparent_1px)] dark:bg-[linear-gradient(to_right,#ffffff0a_1px,transparent_1px),linear-gradient(to_bottom,#ffffff0a_1px,transparent_1px)] bg-[size:24px_24px]`} />
       
-      {/* Header */}
-      <header className="w-full max-w-4xl flex justify-between items-center mb-1 sm:mb-2 z-10 flex-shrink-0">
+      {statsLoaded && (
+        <>
+          {/* Header */}
+          <header className="w-full max-w-4xl flex justify-between items-center mb-1 sm:mb-2 z-10 flex-shrink-0">
          <div className="flex items-center gap-3">
             {tgUser ? (
               <div className="flex items-center gap-2 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 pr-3 pl-1 py-1 rounded-full shadow-sm">
@@ -3118,19 +3129,6 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {noSolutionMessage && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="absolute top-20 left-1/2 -translate-x-1/2 bg-red-500 text-white px-4 py-2 rounded-full font-bold text-sm shadow-lg whitespace-nowrap z-50"
-          >
-            {t.noSolution}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {/* Visual Block (Ticket or Car) */}
       <div className="flex-1 min-h-0 w-full max-w-4xl flex items-center justify-center my-1 sm:my-2 z-10 relative">
           <motion.div 
@@ -3142,6 +3140,25 @@ export default function App() {
             <div className={`origin-center w-full h-full flex items-center justify-center ${gameMode === 'ticket' ? 'scale-[0.8] sm:scale-100' : ''}`}>
               {gameMode === 'ticket' ? renderTicket() : renderLicensePlate()}
             </div>
+            
+            <AnimatePresence>
+              {noSolutionMessage && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="absolute inset-0 flex items-center justify-center z-50 pointer-events-none"
+                >
+                  <div className="bg-red-500/90 backdrop-blur-sm text-white px-6 py-4 rounded-2xl font-bold text-center shadow-2xl border-2 border-red-400 max-w-[90%]">
+                    <div className="text-lg sm:text-xl mb-2">{t.noSolution}</div>
+                    <div className="text-sm sm:text-base opacity-90 flex items-center justify-center gap-2">
+                      <RefreshCw size={16} className="animate-spin-slow" />
+                      {gameMode === 'ticket' ? t.skipTicket : t.skipCar}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </motion.div>
       </div>
 
@@ -3195,7 +3212,7 @@ export default function App() {
           <button 
             onClick={() => initGame(false, true)}
             disabled={isHinting}
-            className={`flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800 transition-all font-bold tracking-wide backdrop-blur-md text-xs sm:text-base ${isHinting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center justify-center gap-1 sm:gap-2 px-2 py-2 sm:px-6 sm:py-3 rounded-xl sm:rounded-2xl border-2 transition-all font-bold tracking-wide backdrop-blur-md text-xs sm:text-base ${isHinting ? 'opacity-50 cursor-not-allowed border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400' : noSolutionMessage ? 'animate-pulse ring-4 ring-red-500/30 border-red-500 text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/40' : 'border-zinc-300 dark:border-zinc-800/50 text-zinc-500 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-200 dark:hover:bg-zinc-800'}`}
           >
             <RefreshCw size={16} className={`shrink-0 ${isHinting ? "animate-spin" : ""}`} />
             <span className="truncate">
@@ -3206,6 +3223,8 @@ export default function App() {
           </button>
         </div>
       </div>
+      </>
+      )}
 
       {/* Modals */}
       <AnimatePresence>
