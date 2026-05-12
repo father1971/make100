@@ -7,6 +7,10 @@ import path from "path";
 const PORT = 3000;
 const JWT_SECRET = process.env.JWT_SECRET || crypto.randomBytes(32).toString('hex');
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const TELEGRAM_TEST_BOT_TOKEN = process.env.TELEGRAM_TEST_BOT_TOKEN;
+
+// Combine tokens into an array, filtering out any undefined ones
+const BOT_TOKENS = [TELEGRAM_BOT_TOKEN, TELEGRAM_TEST_BOT_TOKEN].filter(Boolean) as string[];
 
 async function startServer() {
   const app = express();
@@ -21,11 +25,8 @@ async function startServer() {
       return res.status(400).json({ error: "initData is required" });
     }
 
-    if (!TELEGRAM_BOT_TOKEN) {
-      console.warn("TELEGRAM_BOT_TOKEN is not set. Skipping validation for development.");
-      // In a real app, you should return 500 here.
-      // For preview purposes, we'll generate a token anyway if the bot token is missing,
-      // but we'll log a warning.
+    if (BOT_TOKENS.length === 0) {
+      console.warn("No Telegram bot tokens are set. Skipping validation for development.");
       const token = jwt.sign({ mock: true }, JWT_SECRET, { expiresIn: '1h' });
       return res.json({ token, message: "Warning: Validation skipped due to missing TELEGRAM_BOT_TOKEN" });
     }
@@ -42,10 +43,20 @@ async function startServer() {
       dataCheckArr.sort();
       const dataCheckString = dataCheckArr.join('\n');
 
-      const secretKey = crypto.createHmac('sha256', 'WebAppData').update(TELEGRAM_BOT_TOKEN).digest();
-      const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+      let isValid = false;
 
-      if (calculatedHash !== hash) {
+      // Try hashing with each available bot token
+      for (const token of BOT_TOKENS) {
+        const secretKey = crypto.createHmac('sha256', 'WebAppData').update(token).digest();
+        const calculatedHash = crypto.createHmac('sha256', secretKey).update(dataCheckString).digest('hex');
+        
+        if (calculatedHash === hash) {
+          isValid = true;
+          break;
+        }
+      }
+
+      if (!isValid) {
         return res.status(401).json({ error: "Invalid signature" });
       }
 
@@ -111,7 +122,7 @@ async function startServer() {
             [
               {
                 text: "Play Make100",
-                url: "https://t.me/make100_bot/app"
+                url: "https://t.me/Test_Make100_bot/app"
               }
             ]
           ]

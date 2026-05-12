@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Smartphone, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb, Trophy, Clock, Hash, Activity, Share2 } from 'lucide-react';
+import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Smartphone, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb, Trophy, Clock, Hash, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from './firebase';
 import { signInAnonymously, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -2049,70 +2049,6 @@ export default function App() {
     setGameState('playing');
   };
 
-  const [isSharing, setIsSharing] = useState(false);
-
-  const handleShare = async () => {
-    playSound('click');
-    playVibration('light');
-    
-    const tg = (window as unknown as { Telegram?: { WebApp: any } }).Telegram?.WebApp;
-    
-    if (typeof (window as any).TelegramGameProxy !== 'undefined') {
-      (window as any).TelegramGameProxy.shareScore();
-      return;
-    }
-
-    const fallbackShare = () => {
-      const text = `I solved ${solvedCount} tickets in Make100! Can you beat me?`;
-      const url = `https://t.me/make100_bot/app`;
-      if (tg?.switchInlineQuery) {
-        try {
-          tg.switchInlineQuery(text, ['users', 'groups', 'channels']);
-        } catch (e) {
-          if (tg?.openTelegramLink) {
-            tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-          }
-        }
-      } else if (tg?.openTelegramLink) {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-      } else {
-        window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank');
-      }
-    };
-
-    if (!tgUser?.id) {
-      fallbackShare();
-      return;
-    }
-
-    setIsSharing(true);
-    try {
-      const response = await fetch('/api/share', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: tgUser.id, solvedCount })
-      });
-      
-      const data = await response.json();
-      
-      if (data.id && tg?.shareMessage) {
-        try {
-          tg.shareMessage(data.id);
-        } catch (e) {
-          console.error("shareMessage failed:", e);
-          fallbackShare();
-        }
-      } else {
-        fallbackShare();
-      }
-    } catch (error) {
-      console.error("Error sharing:", error);
-      fallbackShare();
-    } finally {
-      setIsSharing(false);
-    }
-  };
-
   // Game Statistics
   const [solvedCount, setSolvedCount] = useState(0);
   const [unsolvedCount, setUnsolvedCount] = useState(0);
@@ -2901,18 +2837,6 @@ export default function App() {
                       style={{ width: `${getLevelInfo(solvedCount).progress}%` }}
                     />
                   </div>
-                </div>
-
-                {/* Share */}
-                <div className="flex flex-col gap-3">
-                  <button 
-                    onClick={handleShare}
-                    disabled={isSharing}
-                    className="w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white shadow-md disabled:opacity-50"
-                  >
-                    {isSharing ? <RefreshCw size={18} className="animate-spin" /> : <Share2 size={18} />} 
-                    {isSharing ? 'Preparing...' : 'Share Score'}
-                  </button>
                 </div>
 
                 {/* Leaderboard */}
