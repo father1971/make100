@@ -2,7 +2,7 @@ function gcd(a: number, b: number): number {
     a = Math.abs(a);
     b = Math.abs(b);
     while (b > 0) {
-      let temp = b;
+      const temp = b;
       b = a % b;
       a = temp;
     }
@@ -13,7 +13,7 @@ function gcd(a: number, b: number): number {
     n: number;
     d: number;
     constructor(n: number, d: number) {
-      let g = gcd(n, d);
+      const g = gcd(n, d);
       this.n = n / g;
       this.d = d / g;
       if (this.d < 0) {
@@ -35,11 +35,11 @@ function gcd(a: number, b: number): number {
 
   function parseFrac(str: string) {
     if (str.includes('.')) {
-      let parts = str.split('.');
+      const parts = str.split('.');
       if (parts.length > 2) throw new Error("Invalid number");
-      let decLen = parts[1].length;
-      let n = parseInt(parts[0] + parts[1], 10);
-      let d = Math.pow(10, decLen);
+      const decLen = parts[1].length;
+      const n = parseInt(parts[0] + parts[1], 10);
+      const d = Math.pow(10, decLen);
       return new Frac(n, d);
     }
     return new Frac(parseInt(str, 10), 1);
@@ -73,10 +73,10 @@ function calculateResult(digits: string[], gaps: string[]): number {
     expr = expr.replace(/(^|\()(\s*)([+-])/g, '$1$20$3');
 
     // Evaluate strict
-    let tokens: (Frac | string)[] = [];
+    const tokens: (Frac | string)[] = [];
     let num = '';
     for (let i = 0; i < expr.length; i++) {
-      let c = expr[i];
+      const c = expr[i];
       if (/[0-9.]/.test(c)) {
         num += c;
       } else if (/[+\-*/()]/.test(c)) {
@@ -89,10 +89,10 @@ function calculateResult(digits: string[], gaps: string[]): number {
     }
     if (num) tokens.push(parseFrac(num));
 
-    let output: (Frac | string)[] = [];
-    let ops: string[] = [];
-    let prec: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
-    for (let t of tokens) {
+    const output: (Frac | string)[] = [];
+    const ops: string[] = [];
+    const prec: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
+    for (const t of tokens) {
       if (t instanceof Frac) {
         output.push(t);
       } else if (t === '(') {
@@ -111,19 +111,19 @@ function calculateResult(digits: string[], gaps: string[]): number {
     }
     while (ops.length) output.push(ops.pop()!);
 
-    let stack: Frac[] = [];
-    for (let t of output) {
+    const stack: Frac[] = [];
+    for (const t of output) {
       if (t instanceof Frac) {
         stack.push(t);
       } else {
-        let b = stack.pop()!;
-        let a = stack.pop()!;
+        const b = stack.pop()!;
+        const a = stack.pop()!;
         if (t === '+') stack.push(a.add(b));
         if (t === '-') stack.push(a.sub(b));
         if (t === '*') stack.push(a.mul(b));
         if (t === '/') {
           if (b.n === 0) return NaN;
-          let res = a.div(b);
+          const res = a.div(b);
           if (!res.isTerm()) return NaN;
           stack.push(res);
         }
@@ -132,7 +132,7 @@ function calculateResult(digits: string[], gaps: string[]): number {
     
     if (stack.length !== 1) return NaN;
     
-    let finalRes = stack[0];
+    const finalRes = stack[0];
     if (finalRes.d === 1) return finalRes.n;
     return finalRes.n / finalRes.d;
   } catch (e) {
@@ -142,19 +142,19 @@ function calculateResult(digits: string[], gaps: string[]): number {
 
 function findSolution(digits: string[]): string[] | null {
   function getNumbers(arr: string[]) {
-    let str = arr.join('');
-    let res = [];
+    const str = arr.join('');
+    const res = [];
     
     if (str.length === 1 || str[0] !== '0') {
       res.push({ val: parseFrac(str), expr: str });
     }
     
     for (let i = 1; i < str.length; i++) {
-      let intPart = str.slice(0, i);
+      const intPart = str.slice(0, i);
       if (intPart.length > 1 && intPart[0] === '0') continue;
       
-      let decStr = str.slice(0, i) + '.' + str.slice(i);
-      let exprStr = str.slice(0, i) + ',' + str.slice(i);
+      const decStr = str.slice(0, i) + '.' + str.slice(i);
+      const exprStr = str.slice(0, i) + ',' + str.slice(i);
       res.push({ val: parseFrac(decStr), expr: exprStr });
     }
     return res;
@@ -162,12 +162,12 @@ function findSolution(digits: string[]): string[] | null {
 
   function getPartitions(arr: string[]): any[] {
     if (arr.length === 0) return [[]];
-    let result = [];
+    const result = [];
     for (let i = 1; i <= arr.length; i++) {
-      let firsts = getNumbers(arr.slice(0, i));
-      let rests = getPartitions(arr.slice(i));
-      for (let f of firsts) {
-        for (let r of rests) {
+      const firsts = getNumbers(arr.slice(0, i));
+      const rests = getPartitions(arr.slice(i));
+      for (const f of firsts) {
+        for (const r of rests) {
           result.push([f, ...r]);
         }
       }
@@ -177,32 +177,32 @@ function findSolution(digits: string[]): string[] | null {
 
   function generateExpressions(nums: any[]): any[] {
     if (nums.length === 1) return [{ val: nums[0].val, expr: nums[0].expr, prec: 3 }];
-    let results = [];
+    const results = [];
     for (let i = 1; i < nums.length; i++) {
-      let lefts = generateExpressions(nums.slice(0, i));
-      let rights = generateExpressions(nums.slice(i));
-      for (let l of lefts) {
-        for (let r of rights) {
+      const lefts = generateExpressions(nums.slice(0, i));
+      const rights = generateExpressions(nums.slice(i));
+      for (const l of lefts) {
+        for (const r of rights) {
           // +
-          let valAdd = l.val.add(r.val);
-          let exprAdd = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '+' + (r.prec < 1 ? '(' + r.expr + ')' : r.expr);
+          const valAdd = l.val.add(r.val);
+          const exprAdd = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '+' + (r.prec < 1 ? '(' + r.expr + ')' : r.expr);
           results.push({ val: valAdd, expr: exprAdd, prec: 1 });
           
           // -
-          let valSub = l.val.sub(r.val);
-          let exprSub = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '-' + (r.prec <= 1 ? '(' + r.expr + ')' : r.expr);
+          const valSub = l.val.sub(r.val);
+          const exprSub = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '-' + (r.prec <= 1 ? '(' + r.expr + ')' : r.expr);
           results.push({ val: valSub, expr: exprSub, prec: 1 });
           
           // *
-          let valMul = l.val.mul(r.val);
-          let exprMul = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '*' + (r.prec < 2 ? '(' + r.expr + ')' : r.expr);
+          const valMul = l.val.mul(r.val);
+          const exprMul = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '*' + (r.prec < 2 ? '(' + r.expr + ')' : r.expr);
           results.push({ val: valMul, expr: exprMul, prec: 2 });
           
           // /
           if (r.val.n !== 0) {
-            let valDiv = l.val.div(r.val);
+            const valDiv = l.val.div(r.val);
             if (valDiv.isTerm()) {
-              let exprDiv = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '/' + (r.prec <= 2 ? '(' + r.expr + ')' : r.expr);
+              const exprDiv = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '/' + (r.prec <= 2 ? '(' + r.expr + ')' : r.expr);
               results.push({ val: valDiv, expr: exprDiv, prec: 2 });
             }
           }
@@ -214,7 +214,7 @@ function findSolution(digits: string[]): string[] | null {
 
   function scoreExpression(expr: string): number {
     let score = 0;
-    for (let char of expr) {
+    for (const char of expr) {
       if (char === '+' || char === '-') score += 10;
       if (char === '*' || char === '/') score += 12;
       if (char === '(') score += 5;
@@ -224,11 +224,11 @@ function findSolution(digits: string[]): string[] | null {
   }
 
   const partitions = getPartitions(digits);
-  let validExprs: string[] = [];
+  const validExprs: string[] = [];
 
-  for (let part of partitions) {
-    let exprs = generateExpressions(part);
-    for (let e of exprs) {
+  for (const part of partitions) {
+    const exprs = generateExpressions(part);
+    for (const e of exprs) {
       if (e.val.n === 100 && e.val.d === 1) {
         validExprs.push(e.expr);
       }
@@ -238,14 +238,14 @@ function findSolution(digits: string[]): string[] | null {
   if (validExprs.length === 0) return null;
 
   validExprs.sort((a, b) => scoreExpression(a) - scoreExpression(b));
-  let bestExpr = validExprs[0];
+  const bestExpr = validExprs[0];
 
   // Map the expression back to the gaps array
   let gaps = Array(digits.length + 1).fill('');
   let exprIdx = 0;
   for (let i = 0; i < digits.length; i++) {
-    let digit = digits[i];
-    let digitIdx = bestExpr.indexOf(digit, exprIdx);
+    const digit = digits[i];
+    const digitIdx = bestExpr.indexOf(digit, exprIdx);
     gaps[i] = bestExpr.slice(exprIdx, digitIdx);
     exprIdx = digitIdx + 1;
   }
@@ -254,7 +254,7 @@ function findSolution(digits: string[]): string[] | null {
   // Clean up unnecessary outer parentheses if they exist
   while (gaps[0].startsWith('(') && gaps[digits.length].endsWith(')')) {
     // Check if removing them keeps the expression valid
-    let tempGaps = [...gaps];
+    const tempGaps = [...gaps];
     tempGaps[0] = tempGaps[0].substring(1);
     tempGaps[digits.length] = tempGaps[digits.length].slice(0, -1);
     if (calculateResult(digits, tempGaps) === 100) {

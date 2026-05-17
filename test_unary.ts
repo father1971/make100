@@ -5,7 +5,7 @@ function gcd(a: number, b: number): number {
     a = Math.abs(a);
     b = Math.abs(b);
     while (b > 0) {
-      let temp = b;
+      const temp = b;
       b = a % b;
       a = temp;
     }
@@ -16,7 +16,7 @@ function gcd(a: number, b: number): number {
     n: number;
     d: number;
     constructor(n: number, d: number) {
-      let g = gcd(n, d);
+      const g = gcd(n, d);
       this.n = n / g;
       this.d = d / g;
       if (this.d < 0) {
@@ -38,10 +38,10 @@ function gcd(a: number, b: number): number {
 
   function parseFrac(str: string): Frac {
     if (str.includes('.')) {
-      let parts = str.split('.');
-      let decLen = parts[1].length;
-      let n = parseInt(parts[0] + parts[1], 10);
-      let d = Math.pow(10, decLen);
+      const parts = str.split('.');
+      const decLen = parts[1].length;
+      const n = parseInt(parts[0] + parts[1], 10);
+      const d = Math.pow(10, decLen);
       return new Frac(n, d);
     }
     return new Frac(parseInt(str, 10), 1);
@@ -69,10 +69,10 @@ function calculateResult(digits: string[], gaps: string[]): number {
     if (/[^0-9+\-\*/().\s]/.test(expr)) return NaN;
 
     // Evaluate strict
-    let tokens: (Frac | string)[] = [];
+    const tokens: (Frac | string)[] = [];
     let num = '';
     for (let i = 0; i < expr.length; i++) {
-      let c = expr[i];
+      const c = expr[i];
       if (/[0-9.]/.test(c)) {
         num += c;
       } else {
@@ -85,10 +85,10 @@ function calculateResult(digits: string[], gaps: string[]): number {
     }
     if (num) tokens.push(parseFrac(num));
 
-    let output: (Frac | string)[] = [];
-    let ops: string[] = [];
-    let prec: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
-    for (let t of tokens) {
+    const output: (Frac | string)[] = [];
+    const ops: string[] = [];
+    const prec: Record<string, number> = { '+': 1, '-': 1, '*': 2, '/': 2 };
+    for (const t of tokens) {
       if (t instanceof Frac) {
         output.push(t);
       } else if (t === '(') {
@@ -107,26 +107,26 @@ function calculateResult(digits: string[], gaps: string[]): number {
     }
     while (ops.length) output.push(ops.pop()!);
 
-    let stack: Frac[] = [];
-    for (let t of output) {
+    const stack: Frac[] = [];
+    for (const t of output) {
       if (t instanceof Frac) {
         stack.push(t);
       } else {
-        let b = stack.pop()!;
-        let a = stack.pop()!;
+        const b = stack.pop()!;
+        const a = stack.pop()!;
         if (t === '+') stack.push(a.add(b));
         if (t === '-') stack.push(a.sub(b));
         if (t === '*') stack.push(a.mul(b));
         if (t === '/') {
           if (b.n === 0) return NaN;
-          let res = a.div(b);
+          const res = a.div(b);
           if (!res.isTerm()) return NaN;
           stack.push(res);
         }
       }
     }
     
-    let finalRes = stack[0];
+    const finalRes = stack[0];
     if (finalRes.d === 1) return finalRes.n;
     return finalRes.n / finalRes.d;
   } catch (e) {

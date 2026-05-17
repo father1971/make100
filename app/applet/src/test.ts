@@ -1,8 +1,8 @@
 const digits = ['6', '2', '6', '0', '9', '9'];
 
 function getNumbers(arr: string[]) {
-  let str = arr.join('');
-  let res = [{ val: parseFloat(str), expr: str }];
+  const str = arr.join('');
+  const res = [{ val: parseFloat(str), expr: str }];
   for (let i = 1; i < str.length; i++) {
     res.push({ val: parseFloat(str.slice(0, i) + '.' + str.slice(i)), expr: str.slice(0, i) + '.' + str.slice(i) });
   }
@@ -11,12 +11,12 @@ function getNumbers(arr: string[]) {
 
 function getPartitions(arr: string[]): any[] {
   if (arr.length === 0) return [[]];
-  let result = [];
+  const result = [];
   for (let i = 1; i <= arr.length; i++) {
-    let firsts = getNumbers(arr.slice(0, i));
-    let rests = getPartitions(arr.slice(i));
-    for (let f of firsts) {
-      for (let r of rests) {
+    const firsts = getNumbers(arr.slice(0, i));
+    const rests = getPartitions(arr.slice(i));
+    for (const f of firsts) {
+      for (const r of rests) {
         result.push([f, ...r]);
       }
     }
@@ -26,23 +26,23 @@ function getPartitions(arr: string[]): any[] {
 
 function generateExpressions(nums: any[]): any[] {
   if (nums.length === 1) return [{ val: nums[0].val, expr: nums[0].expr, prec: 3 }];
-  let results = [];
+  const results = [];
   for (let i = 1; i < nums.length; i++) {
-    let lefts = generateExpressions(nums.slice(0, i));
-    let rights = generateExpressions(nums.slice(i));
-    for (let l of lefts) {
-      for (let r of rights) {
-        let exprAdd = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '+' + (r.prec < 1 ? '(' + r.expr + ')' : r.expr);
+    const lefts = generateExpressions(nums.slice(0, i));
+    const rights = generateExpressions(nums.slice(i));
+    for (const l of lefts) {
+      for (const r of rights) {
+        const exprAdd = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '+' + (r.prec < 1 ? '(' + r.expr + ')' : r.expr);
         results.push({ val: l.val + r.val, expr: exprAdd, prec: 1 });
         
-        let exprSub = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '-' + (r.prec <= 1 ? '(' + r.expr + ')' : r.expr);
+        const exprSub = (l.prec < 1 ? '(' + l.expr + ')' : l.expr) + '-' + (r.prec <= 1 ? '(' + r.expr + ')' : r.expr);
         results.push({ val: l.val - r.val, expr: exprSub, prec: 1 });
         
-        let exprMul = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '*' + (r.prec < 2 ? '(' + r.expr + ')' : r.expr);
+        const exprMul = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '*' + (r.prec < 2 ? '(' + r.expr + ')' : r.expr);
         results.push({ val: l.val * r.val, expr: exprMul, prec: 2 });
         
         if (Math.abs(r.val) > 1e-9) {
-          let exprDiv = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '/' + (r.prec <= 2 ? '(' + r.expr + ')' : r.expr);
+          const exprDiv = (l.prec < 2 ? '(' + l.expr + ')' : l.expr) + '/' + (r.prec <= 2 ? '(' + r.expr + ')' : r.expr);
           results.push({ val: l.val / r.val, expr: exprDiv, prec: 2 });
         }
       }
@@ -52,11 +52,11 @@ function generateExpressions(nums: any[]): any[] {
 }
 
 const partitions = getPartitions(digits);
-let validExprs = [];
+const validExprs = [];
 
-for (let part of partitions) {
-  let exprs = generateExpressions(part);
-  for (let e of exprs) {
+for (const part of partitions) {
+  const exprs = generateExpressions(part);
+  for (const e of exprs) {
     if (Math.abs(e.val - 100) < 1e-6) {
       validExprs.push(e);
     }
