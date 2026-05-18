@@ -2716,6 +2716,28 @@ export default function App() {
     );
   }
 
+  if (!tgUser && window.location.hostname !== 'localhost') {
+    return (
+      <div className="h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center text-zinc-900 dark:text-zinc-100 p-4 text-center">
+        <div className="bg-orange-100 dark:bg-orange-900/30 text-orange-500 p-4 rounded-full mb-4">
+          <Smartphone size={32} />
+        </div>
+        <h2 className="text-xl font-bold mb-2">Telegram Only</h2>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mb-6 max-w-xs">
+          Please play the game through our Telegram Bot.
+        </p>
+        <button 
+          onClick={() => {
+            window.location.href = "https://t.me/make100_bot";
+          }}
+          className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-bold transition-colors"
+        >
+          Open in Telegram
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div 
       className={`h-[100dvh] ${theme} bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans overflow-y-auto overflow-x-hidden relative flex flex-col items-center px-1 sm:px-4 md:px-6`}
