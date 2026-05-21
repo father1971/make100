@@ -2344,6 +2344,39 @@ export default function App() {
   useEffect(() => {
     let attempts = 0;
     const initTg = async () => {
+      // 1. Try Telegram Game Proxy (HTML5 Games via Bot API) or check URL params
+      const gameProxy = (window as any).TelegramGameProxy;
+      const urlParams = new URLSearchParams(window.location.search);
+      const isHtml5Game = urlParams.has('tgShareScoreUrl') || (gameProxy && Object.keys(gameProxy).length > 0);
+      
+      if (isHtml5Game) {
+        // Look for user info from tgWebAppStartParam, URL params, or gameProxy initParams
+        const startParam = urlParams.get('tgWebAppStartParam');
+        const startParamsObj = startParam ? Object.fromEntries(new URLSearchParams(startParam)) : {};
+        
+        const userId = startParamsObj.user_id || urlParams.get('user_id') || gameProxy?.initParams?.user_id || urlParams.get('chat_id');
+        const firstName = startParamsObj.first_name || urlParams.get('first_name') || urlParams.get('name') || "Player";
+        
+        if (userId) {
+          setTgUser({
+            id: Number(userId),
+            first_name: firstName,
+          });
+          setIsTgValidating(false);
+          return true;
+        } else {
+          // It's a game context, but bot didn't pass user_id. We'll set a test user as requested.
+          console.warn("Game context detected, but no user_id found. If deploying, ensure Bot passes ?user_id=123 in the game URL.");
+          setTgUser({
+            id: 1, // Test user
+            first_name: "Test Player",
+          });
+          setIsTgValidating(false);
+          return true;
+        }
+      }
+
+      // 2. Try Telegram Web App (Mini Apps)
       const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
       if (tg && tg.initData) {
         tg.ready();
@@ -2551,6 +2584,31 @@ export default function App() {
   const currentResult = digits.length ? calculateResult(digits, gaps) : 0;
   const isWin = currentResult === 100;
 
+  const sendScoreToCloudflare = useCallback(async (score: number) => {
+    try {
+      // REPLACE /api/score WITH YOUR CLOUDFLARE WORKER URL
+      // Example: 'https://your-worker-name.your-subdomain.workers.dev/score'
+      const CLOUDFLARE_API_URL = '/api/score'; 
+      const tgParams = (window as any).TelegramGameProxy?.initParams || {};
+      const payload = {
+        score,
+        userId: tgUser?.id || tgParams.user_id,
+        initParams: tgParams
+      };
+      
+      const response = await fetch(CLOUDFLARE_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+      console.log('Score sent to Cloudflare API:', await response.text());
+    } catch (e) {
+      console.error('Failed to send score via fetch', e);
+    }
+  }, [tgUser]);
+
   useEffect(() => {
     if (isWin && !won && !hintUsed) {
       setWon(true);
@@ -2563,6 +2621,9 @@ export default function App() {
       setSolvedCount(newSolvedCount);
       const newTotalTime = totalSolveTime + elapsedTime;
       setTotalSolveTime(newTotalTime);
+      
+      // Send score via fetch
+      sendScoreToCloudflare(newSolvedCount);
       
       // Count operators used in the winning solution
       const operatorsUsed = gaps.join('').replace(/[0-9.]/g, '').length;
@@ -2716,9 +2777,35 @@ export default function App() {
     );
   }
 
+  if (!tgUser && window.location.hostname !== 'localhost') {
+    return (
+      <div className="h-[100dvh] bg-[var(--tg-theme-bg-color,#fafafa)] text-[var(--tg-theme-text-color,#09090b)] flex flex-col items-center justify-center p-4 text-center">
+        <div className="bg-[var(--tg-theme-secondary-bg-color,#f4f4f5)] p-4 rounded-full mb-4">
+          <Smartphone size={32} className="text-[var(--tg-theme-button-color,#3b82f6)]" />
+        </div>
+        <h2 className="text-xl font-bold mb-2">Telegram Only</h2>
+        <p className="text-sm opacity-70 mb-2 max-w-xs">
+          Please play the game through our Telegram Bot.
+        </p>
+        <p className="text-xs text-red-500 mb-6 bg-red-100/10 p-2 rounded max-w-xs break-words">
+          Debug: {tgValidationError || "No WebApp initData or Game params found."}
+        </p>
+        <button 
+          onClick={() => {
+            const isProd = window.location.hostname !== 'localhost' && !window.location.hostname.includes('.run.app');
+            window.location.href = isProd ? "https://t.me/Game_Make100_bot" : "https://t.me/test_game_make100_bot";
+          }}
+          className="px-6 py-3 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] rounded-xl font-bold transition-colors"
+        >
+          Open in Telegram
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div 
-      className={`h-[100dvh] ${theme} bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors duration-300 font-sans overflow-y-auto overflow-x-hidden relative flex flex-col items-center px-1 sm:px-4 md:px-6`}
+      className={`h-[100dvh] ${theme} bg-[var(--tg-theme-bg-color,#fafafa)] dark:bg-[var(--tg-theme-bg-color,#09090b)] text-[var(--tg-theme-text-color,#09090b)] dark:text-[var(--tg-theme-text-color,#fafafa)] transition-colors duration-300 font-sans overflow-y-auto overflow-x-hidden relative flex flex-col items-center px-1 sm:px-4 md:px-6`}
       style={{
         paddingTop: 'calc(var(--tg-safe-area-inset-top, env(safe-area-inset-top, 16px)) + 8px)',
         paddingBottom: 'calc(var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 16px)) + 8px)'
@@ -3211,12 +3298,30 @@ export default function App() {
                 <p className="text-lg text-zinc-500 dark:text-zinc-400">{t.solvedIn} <span className="font-mono font-bold">{Math.floor(elapsedTime / 60)}:{(elapsedTime % 60).toString().padStart(2, '0')}</span></p>
                 <p className="text-lg text-zinc-500 dark:text-zinc-400">{t.operatorsUsed} <span className="font-mono font-bold">{gaps.join('').replace(/[0-9.]/g, '').length}</span></p>
               </div>
-              <button 
-                onClick={() => initGame(false)}
-                className="w-full py-4 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_20px_rgba(255,255,255,0.15)] hover:shadow-[0_12px_25px_rgba(0,0,0,0.2)] hover:-translate-y-1"
-              >
-                {gameMode === 'ticket' ? t.nextTicket : t.nextCar}
-              </button>
+              <div className="flex flex-col gap-3">
+                <button 
+                  onClick={() => {
+                    if ((window as any).TelegramGameProxy) {
+                      (window as any).TelegramGameProxy.shareScore();
+                    } else if (tgUser) {
+                      // Fallback if not opened as a game proxy but as a mini app
+                      const tg = (window as any).Telegram?.WebApp;
+                      if (tg && tg.switchInlineQuery) {
+                        tg.switchInlineQuery(solvedCount.toString());
+                      }
+                    }
+                  }}
+                  className="w-full py-4 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(59,130,246,0.3)] hover:-translate-y-1"
+                >
+                  {(t as any).shareScore || "Поделиться"}
+                </button>
+                <button 
+                  onClick={() => initGame(false)}
+                  className="w-full py-4 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_20px_rgba(255,255,255,0.15)] hover:-translate-y-1"
+                >
+                  {gameMode === 'ticket' ? t.nextTicket : t.nextCar}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}
