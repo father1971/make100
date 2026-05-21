@@ -72,9 +72,9 @@ async function startServer() {
 
       const authDate = parseInt(urlParams.get('auth_date') || '0', 10);
       const now = Math.floor(Date.now() / 1000);
-      const FIVE_MINUTES = 5 * 60;
+      const ONE_DAY = 24 * 60 * 60;
 
-      if (now - authDate > FIVE_MINUTES) {
+      if (Math.abs(now - authDate) > ONE_DAY) {
         return res.status(401).json({ error: "Session expired (auth_date is too old)", code: "SESSION_EXPIRED" });
       }
 

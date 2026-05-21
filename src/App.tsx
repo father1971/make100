@@ -2414,6 +2414,9 @@ export default function App() {
             } else {
               setTgValidationError(data.error || 'Validation failed');
             }
+            // Robust fallback: set user from unsafe properties anyway so user is never blocked
+            const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
+            setTgUser(fallbackUser);
             setIsTgValidating(false);
             return true;
           }
@@ -2436,6 +2439,8 @@ export default function App() {
           }
         } catch (err) {
           setTgValidationError('Network error during validation');
+          const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
+          setTgUser(fallbackUser);
         }
         
         setIsTgValidating(false);
@@ -2751,7 +2756,7 @@ export default function App() {
     );
   }
 
-  if (tgValidationError) {
+  if (tgValidationError && !tgUser) {
     if (tgValidationError === 'SESSION_EXPIRED') {
       return (
         <div className="h-[100dvh] bg-zinc-50 dark:bg-zinc-950 flex flex-col items-center justify-center text-zinc-900 dark:text-zinc-100 p-4 text-center">

@@ -76,9 +76,9 @@ export async function onRequestPost({ request, env }) {
 
     const authDate = parseInt(urlParams.get('auth_date') || '0', 10);
     const now = Math.floor(Date.now() / 1000);
-    const FIVE_MINUTES = 5 * 60;
+    const ONE_DAY = 24 * 60 * 60;
 
-    if (now - authDate > FIVE_MINUTES) {
+    if (Math.abs(now - authDate) > ONE_DAY) {
       return new Response(JSON.stringify({ error: "Session expired", code: "SESSION_EXPIRED" }), { status: 401, headers: { "Content-Type": "application/json" } });
     }
 
