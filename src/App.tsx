@@ -2368,108 +2368,159 @@ export default function App() {
 
   useEffect(() => {
     let attempts = 0;
-    const initTg = async () => {
-      // 1. Try Telegram Game Proxy (HTML5 Games via Bot API)
-      const gameProxy = (window as any).TelegramGameProxy;
-      if (gameProxy && gameProxy.initParams && (gameProxy.initParams.user_id || gameProxy.initParams.chat_id)) {
-        setTgUser({
-          id: gameProxy.initParams.user_id || 1,
-          first_name: "Player",
-        });
-        setIsTgValidating(false);
-        return true;
-      }
+    let isMounted = true;
+    let isInitializing = false;
 
-      // 2. Try Telegram Web App (Mini Apps)
-      const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
-      if (tg && tg.initData) {
-        tg.ready();
-        tg.expand();
-        
-        // Check session storage first
-        try {
-          const cachedInitData = sessionStorage.getItem('tgInitData');
-          const cachedUser = sessionStorage.getItem('tgUser');
-          if (cachedInitData === tg.initData && cachedUser) {
-            setTgUser(JSON.parse(cachedUser));
+    const checkAndInit = async () => {
+      if (isInitializing) return false;
+      isInitializing = true;
+
+      try {
+        // 1. Try Telegram Game Proxy (HTML5 Games via Bot API)
+        const gameProxy = (window as any).TelegramGameProxy;
+        if (gameProxy && gameProxy.initParams && (gameProxy.initParams.user_id || gameProxy.initParams.chat_id)) {
+          if (isMounted) {
+            setTgUser({
+              id: gameProxy.initParams.user_id || 1,
+              first_name: "Player",
+            });
             setIsTgValidating(false);
-            return true;
           }
-        } catch (e) {
-          console.error("Session storage error", e);
+          return true;
         }
 
-        try {
-          const response = await fetch('/api/auth/telegram', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ initData: tg.initData })
-          });
-          
-          const data = await response.json();
-          
-          if (!response.ok) {
-            if (data.code === 'SESSION_EXPIRED') {
-              setTgValidationError('SESSION_EXPIRED');
-            } else {
-              setTgValidationError(data.error || 'Validation failed');
-            }
-            // Robust fallback: set user from unsafe properties anyway so user is never blocked
-            const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
-            setTgUser(fallbackUser);
-            setIsTgValidating(false);
-            return true;
-          }
-          
-          let userToSet = null;
-          if (data.user) {
-            userToSet = data.user;
-          } else if (tg.initDataUnsafe?.user) {
-            userToSet = tg.initDataUnsafe.user;
-          }
-
-          if (userToSet) {
-            setTgUser(userToSet);
-            try {
-              sessionStorage.setItem('tgInitData', tg.initData);
-              sessionStorage.setItem('tgUser', JSON.stringify(userToSet));
-            } catch (e) {
-              console.error("Failed to save to session storage", e);
-            }
-          }
-        } catch (err) {
-          setTgValidationError('Network error during validation');
-          const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
-          setTgUser(fallbackUser);
-        }
+        // 2. Try URL query and hash parameters direct fallback (super robust detecting game/bot launch params)
+        const urlParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.slice(1));
+        const tgShareScoreUrl = urlParams.get('tgShareScoreUrl') || hashParams.get('tgShareScoreUrl');
+        const tgUserId = urlParams.get('tg_user_id') || hashParams.get('tg_user_id') || urlParams.get('user_id') || hashParams.get('user_id');
+        const tgInitData = urlParams.get('tgWebAppStartParam') || hashParams.get('tgWebAppStartParam') || urlParams.get('hash') || hashParams.get('hash');
         
-        setIsTgValidating(false);
-        return true;
-      }
-      return false;
-    };
+        if (tgShareScoreUrl || tgUserId || tgInitData) {
+          if (isMounted) {
+            setTgUser({
+              id: tgUserId ? Number(tgUserId) : 1,
+              first_name: "Player",
+            });
+            setIsTgValidating(false);
+          }
+          return true;
+        }
 
-    initTg().then(success => {
-      if (!success) {
-        const interval = setInterval(async () => {
-          attempts++;
-          if (await initTg() || attempts > 10) { // Try for 1 second
-            clearInterval(interval);
-            if (attempts > 10) {
-              const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('.run.app');
-              if (isDev) {
-                setTgUser({
-                  id: 1,
-                  first_name: "Player",
-                });
-              }
+        // 3. Try Telegram Web App (Mini Apps)
+        const tg = (window as unknown as { Telegram?: { WebApp: TelegramWebApp } }).Telegram?.WebApp;
+        if (tg && (tg.initData || tg.initDataUnsafe?.user)) {
+          tg.ready();
+          tg.expand();
+          
+          if (!tg.initData) {
+            // Unsafe user fallback if initData is empty but user object is present
+            if (isMounted) {
+              const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
+              setTgUser(fallbackUser);
               setIsTgValidating(false);
             }
+            return true;
           }
-        }, 100);
-        return () => clearInterval(interval);
+
+          // Check session storage first
+          try {
+            const cachedInitData = sessionStorage.getItem('tgInitData');
+            const cachedUser = sessionStorage.getItem('tgUser');
+            if (cachedInitData === tg.initData && cachedUser) {
+              if (isMounted) {
+                setTgUser(JSON.parse(cachedUser));
+                setIsTgValidating(false);
+              }
+              return true;
+            }
+          } catch (e) {
+            console.error("Session storage error", e);
+          }
+
+          try {
+            const response = await fetch('/api/auth/telegram', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ initData: tg.initData })
+            });
+            
+            const data = await response.json();
+            
+            if (!isMounted) return true;
+
+            if (!response.ok) {
+              if (data.code === 'SESSION_EXPIRED') {
+                setTgValidationError('SESSION_EXPIRED');
+              } else {
+                setTgValidationError(data.error || 'Validation failed');
+              }
+              const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
+              setTgUser(fallbackUser);
+              setIsTgValidating(false);
+              return true;
+            }
+            
+            let userToSet = null;
+            if (data.user) {
+              userToSet = data.user;
+            } else if (tg.initDataUnsafe?.user) {
+              userToSet = tg.initDataUnsafe.user;
+            }
+
+            if (userToSet) {
+              setTgUser(userToSet);
+              try {
+                sessionStorage.setItem('tgInitData', tg.initData);
+                sessionStorage.setItem('tgUser', JSON.stringify(userToSet));
+              } catch (e) {
+                console.error("Failed to save to session storage", e);
+              }
+            }
+          } catch (err) {
+            if (isMounted) {
+              setTgValidationError('Network error during validation');
+              const fallbackUser = tg.initDataUnsafe?.user || { id: 1, first_name: "Player" };
+              setTgUser(fallbackUser);
+            }
+          }
+          
+          if (isMounted) {
+            setIsTgValidating(false);
+          }
+          return true;
+        }
+
+        return false;
+      } finally {
+        isInitializing = false;
       }
-    });
+    };
+
+    const poll = async () => {
+      attempts++;
+      const success = await checkAndInit();
+      if (success) return;
+
+      if (attempts < 100 && isMounted) { // Poll up to 10 seconds (100 * 100ms)
+        setTimeout(poll, 100);
+      } else if (isMounted) {
+        const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('.run.app');
+        if (isDev) {
+          setTgUser({
+            id: 1,
+            first_name: "Player",
+          });
+        }
+        setIsTgValidating(false);
+      }
+    };
+
+    poll();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
