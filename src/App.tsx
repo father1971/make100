@@ -76,6 +76,7 @@ interface TelegramWebApp {
 const TRANSLATIONS = {
   ru: {
     title: "Make100",
+    player: "Игрок",
     gameMode: "Режим",
     car: "Автомобиль",
     ticket: "Билет",
@@ -134,6 +135,7 @@ const TRANSLATIONS = {
   },
   en: {
     title: "Make100",
+    player: "Player",
     gameMode: "Mode",
     car: "Car",
     ticket: "Ticket",
@@ -192,6 +194,7 @@ const TRANSLATIONS = {
   },
   de: {
     title: "Make100",
+    player: "Spieler",
     gameMode: "Modus",
     car: "Auto",
     ticket: "Ticket",
@@ -250,6 +253,7 @@ const TRANSLATIONS = {
   },
   fr: {
     title: "Make100",
+    player: "Joueur",
     gameMode: "Mode",
     car: "Voiture",
     ticket: "Billet",
@@ -308,6 +312,7 @@ const TRANSLATIONS = {
   },
   pt: {
     title: "Make100",
+    player: "Jogador",
     gameMode: "Modo",
     car: "Carro",
     ticket: "Bilhete",
@@ -366,6 +371,7 @@ const TRANSLATIONS = {
   },
   es: {
     title: "Make100",
+    player: "Jugador",
     gameMode: "Modo",
     car: "Coche",
     ticket: "Boleto",
@@ -424,6 +430,7 @@ const TRANSLATIONS = {
   },
   zh: {
     title: "Make100",
+    player: "玩家",
     gameMode: "模式",
     car: "汽车",
     ticket: "门票",
@@ -482,6 +489,7 @@ const TRANSLATIONS = {
   },
   ja: {
     title: "Make100",
+    player: "プレイヤー",
     gameMode: "モード",
     car: "車",
     ticket: "チケット",
@@ -540,6 +548,7 @@ const TRANSLATIONS = {
   },
   it: {
     title: "Make100",
+    player: "Giocatore",
     gameMode: "Modalità",
     car: "Auto",
     ticket: "Biglietto",
@@ -598,6 +607,7 @@ const TRANSLATIONS = {
   },
   ko: {
     title: "Make100",
+    player: "플레이어",
     gameMode: "모드",
     car: "자동차",
     ticket: "티켓",
@@ -656,6 +666,7 @@ const TRANSLATIONS = {
   },
   tr: {
     title: "Make100",
+    player: "Oyuncu",
     gameMode: "Mod",
     car: "Araba",
     ticket: "Bilet",
@@ -714,6 +725,7 @@ const TRANSLATIONS = {
   },
   he: {
     title: "Make100",
+    player: "שחקן",
     gameMode: "מצב",
     car: "מכונית",
     ticket: "כרטיס",
@@ -772,6 +784,7 @@ const TRANSLATIONS = {
   },
   ar: {
     title: "Make100",
+    player: "اللاعب",
     gameMode: "الوضع",
     car: "سيارة",
     ticket: "تذكرة",
@@ -830,6 +843,7 @@ const TRANSLATIONS = {
   },
   hi: {
     title: "Make100",
+    player: "खिलाड़ी",
     gameMode: "मोड",
     car: "कार",
     ticket: "टिकट",
@@ -888,6 +902,7 @@ const TRANSLATIONS = {
   },
   la: {
     title: "Make100",
+    player: "Lusor",
     gameMode: "Modus",
     car: "Currus",
     ticket: "Tessera",
@@ -946,6 +961,7 @@ const TRANSLATIONS = {
   },
   eo: {
     title: "Make100",
+    player: "Ludanto",
     gameMode: "Reĝimo",
     car: "Aŭto",
     ticket: "Bileto",
@@ -1004,6 +1020,7 @@ const TRANSLATIONS = {
   },
   elvish: {
     title: "Make100",
+    player: "Tyalo",
     gameMode: "Tárië",
     car: "Racar",
     ticket: "Tarma",
@@ -1062,6 +1079,7 @@ const TRANSLATIONS = {
   },
   klingon: {
     title: "Make100",
+    player: "Qujwl'",
     gameMode: "mIw",
     car: "Duj",
     ticket: "chaw'",
@@ -1120,6 +1138,7 @@ const TRANSLATIONS = {
   },
   dothraki: {
     title: "Make100",
+    player: "Dothrak",
     gameMode: "Fich",
     car: "Hrakkar",
     ticket: "Tim",
@@ -1178,6 +1197,7 @@ const TRANSLATIONS = {
   },
   valyrian: {
     title: "Make100",
+    player: "Tyalas",
     gameMode: "Kasta",
     car: "Zaldrīzes",
     ticket: "Tēmi",
@@ -2817,7 +2837,9 @@ export default function App() {
                     <User size={16} />
                   </div>
                 )}
-                <span className="text-sm font-bold text-zinc-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">{tgUser.first_name}</span>
+                <span className="text-sm font-bold text-zinc-900 dark:text-white truncate max-w-[100px] sm:max-w-[150px]">
+                  {tgUser.first_name === 'Player' || tgUser.first_name === 'Test Player' ? t.player || tgUser.first_name : tgUser.first_name}
+                </span>
                 {playerRank !== null && (
                   <div className="flex items-center gap-1 bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded text-xs font-bold">
                     <Trophy size={10} />
@@ -3099,7 +3121,7 @@ export default function App() {
                         
                         <div className="flex flex-col flex-1 min-w-0">
                           <span className="font-bold text-zinc-900 dark:text-white truncate text-sm sm:text-base">
-                            {player.displayName || 'Anonymous'}
+                            {player.displayName === 'Player' || player.displayName === 'Test Player' ? t.player || player.displayName : (player.displayName || 'Anonymous')}
                           </span>
                           <div className="flex items-center gap-3 mt-1">
                             <div className="flex items-center gap-1 text-xs text-zinc-500 dark:text-zinc-400" title={t.solved}>
