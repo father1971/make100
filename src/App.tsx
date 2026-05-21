@@ -1438,7 +1438,11 @@ function findSolution(digits: string[]): string[] | null {
     return result;
   }
 
+  const exprMemo = new Map<string, any[]>();
   function generateExpressions(nums: any[]): any[] {
+    const key = nums.map(n => n.expr).join('|');
+    if (exprMemo.has(key)) return exprMemo.get(key)!;
+
     if (nums.length === 1) return [{ val: nums[0].val, expr: nums[0].expr, prec: 3 }];
     const results = [];
     for (let i = 1; i < nums.length; i++) {
@@ -1472,6 +1476,7 @@ function findSolution(digits: string[]): string[] | null {
         }
       }
     }
+    exprMemo.set(key, results);
     return results;
   }
 
@@ -2344,36 +2349,15 @@ export default function App() {
   useEffect(() => {
     let attempts = 0;
     const initTg = async () => {
-      // 1. Try Telegram Game Proxy (HTML5 Games via Bot API) or check URL params
+      // 1. Try Telegram Game Proxy (HTML5 Games via Bot API)
       const gameProxy = (window as any).TelegramGameProxy;
-      const urlParams = new URLSearchParams(window.location.search);
-      const isHtml5Game = urlParams.has('tgShareScoreUrl') || (gameProxy && Object.keys(gameProxy).length > 0);
-      
-      if (isHtml5Game) {
-        // Look for user info from tgWebAppStartParam, URL params, or gameProxy initParams
-        const startParam = urlParams.get('tgWebAppStartParam');
-        const startParamsObj = startParam ? Object.fromEntries(new URLSearchParams(startParam)) : {};
-        
-        const userId = startParamsObj.user_id || urlParams.get('user_id') || gameProxy?.initParams?.user_id || urlParams.get('chat_id');
-        const firstName = startParamsObj.first_name || urlParams.get('first_name') || urlParams.get('name') || "Player";
-        
-        if (userId) {
-          setTgUser({
-            id: Number(userId),
-            first_name: firstName,
-          });
-          setIsTgValidating(false);
-          return true;
-        } else {
-          // It's a game context, but bot didn't pass user_id. We'll set a test user as requested.
-          console.warn("Game context detected, but no user_id found. If deploying, ensure Bot passes ?user_id=123 in the game URL.");
-          setTgUser({
-            id: 1, // Test user
-            first_name: "Test Player",
-          });
-          setIsTgValidating(false);
-          return true;
-        }
+      if (gameProxy && gameProxy.initParams && (gameProxy.initParams.user_id || gameProxy.initParams.chat_id)) {
+        setTgUser({
+          id: gameProxy.initParams.user_id || 1,
+          first_name: "Player",
+        });
+        setIsTgValidating(false);
+        return true;
       }
 
       // 2. Try Telegram Web App (Mini Apps)
@@ -2446,7 +2430,16 @@ export default function App() {
           attempts++;
           if (await initTg() || attempts > 10) { // Try for 1 second
             clearInterval(interval);
-            if (attempts > 10) setIsTgValidating(false);
+            if (attempts > 10) {
+              const isDev = window.location.hostname === 'localhost' || window.location.hostname.includes('.run.app');
+              if (isDev) {
+                setTgUser({
+                  id: 1,
+                  first_name: "Player",
+                });
+              }
+              setIsTgValidating(false);
+            }
           }
         }, 100);
         return () => clearInterval(interval);
@@ -2777,18 +2770,15 @@ export default function App() {
     );
   }
 
-  if (!tgUser && window.location.hostname !== 'localhost') {
+  if (!tgUser && window.location.hostname !== 'localhost' && !window.location.hostname.includes('.run.app')) {
     return (
       <div className="h-[100dvh] bg-[var(--tg-theme-bg-color,#fafafa)] text-[var(--tg-theme-text-color,#09090b)] flex flex-col items-center justify-center p-4 text-center">
         <div className="bg-[var(--tg-theme-secondary-bg-color,#f4f4f5)] p-4 rounded-full mb-4">
           <Smartphone size={32} className="text-[var(--tg-theme-button-color,#3b82f6)]" />
         </div>
         <h2 className="text-xl font-bold mb-2">Telegram Only</h2>
-        <p className="text-sm opacity-70 mb-2 max-w-xs">
+        <p className="text-sm opacity-70 mb-6 max-w-xs">
           Please play the game through our Telegram Bot.
-        </p>
-        <p className="text-xs text-red-500 mb-6 bg-red-100/10 p-2 rounded max-w-xs break-words">
-          Debug: {tgValidationError || "No WebApp initData or Game params found."}
         </p>
         <button 
           onClick={() => {

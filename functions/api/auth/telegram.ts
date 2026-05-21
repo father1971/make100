@@ -12,7 +12,17 @@ export async function onRequestPost({ request, env }) {
     }
 
     if (BOT_TOKENS.length === 0) {
-      return new Response(JSON.stringify({ token: "mock_token", message: "Warning: Validation skipped due to missing TELEGRAM_BOT_TOKEN" }), { headers: { "Content-Type": "application/json" } });
+      let user = null;
+      try {
+        const urlParams = new URLSearchParams(initData);
+        const userStr = urlParams.get('user');
+        if (userStr) {
+          user = JSON.parse(userStr);
+        }
+      } catch (e) {
+        console.error("Failed to parse user JSON from initData in telegram.ts Edge flow", e);
+      }
+      return new Response(JSON.stringify({ token: "mock_token", user, message: "Warning: Validation skipped due to missing TELEGRAM_BOT_TOKEN" }), { headers: { "Content-Type": "application/json" } });
     }
 
     const urlParams = new URLSearchParams(initData);

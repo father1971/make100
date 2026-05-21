@@ -28,7 +28,17 @@ async function startServer() {
     if (BOT_TOKENS.length === 0) {
       console.warn("No Telegram bot tokens are set. Skipping validation for development.");
       const token = jwt.sign({ mock: true }, JWT_SECRET, { expiresIn: '1h' });
-      return res.json({ token, message: "Warning: Validation skipped due to missing TELEGRAM_BOT_TOKEN" });
+      let user = null;
+      try {
+        const urlParams = new URLSearchParams(initData);
+        const userStr = urlParams.get('user');
+        if (userStr) {
+          user = JSON.parse(userStr);
+        }
+      } catch (e) {
+        console.error("Failed to parse user JSON from initData in server.ts development flow", e);
+      }
+      return res.json({ token, user, message: "Warning: Validation skipped due to missing TELEGRAM_BOT_TOKEN" });
     }
 
     try {
