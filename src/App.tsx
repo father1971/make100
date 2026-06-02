@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Smartphone, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb, Trophy, Clock, Hash, Activity } from 'lucide-react';
+import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Smartphone, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb, Trophy, Clock, Hash, Activity, Share2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from './firebase';
 import { signInAnonymously, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -120,6 +120,8 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Загрузка рейтинга...",
     noData: "Пока нет данных",
     time: "Время",
+    shareScore: "Поделиться",
+    playAsGuest: "Играть как гость",
     tickets: {
       flight: { title: 'ПОСАДОЧНЫЙ ТАЛОН', subtitle: 'ПЕРВЫЙ КЛАСС', footerLeft: 'ГЕЙТ 14', footerRight: 'МЕСТО 2А' },
       concert: { title: 'LIVE КОНЦЕРТ', subtitle: 'VIP ДОСТУП', footerLeft: 'МИРОВОЙ ТУР', footerRight: 'РЯД 1' },
@@ -179,6 +181,8 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Loading leaderboard...",
     noData: "No data yet",
     time: "Time",
+    shareScore: "Share",
+    playAsGuest: "Play as guest",
     tickets: {
       flight: { title: 'BOARDING PASS', subtitle: 'FIRST CLASS', footerLeft: 'GATE 14', footerRight: 'SEAT 2A' },
       concert: { title: 'LIVE CONCERT', subtitle: 'VIP ACCESS', footerLeft: 'WORLD TOUR', footerRight: 'ROW 1' },
@@ -238,6 +242,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Rangliste wird geladen...",
     noData: "Noch keine Daten",
     time: "Zeit",
+    shareScore: "Teilen",
     tickets: {
       flight: { title: 'BORDKARTE', subtitle: 'ERSTE KLASSE', footerLeft: 'GATE 14', footerRight: 'SITZ 2A' },
       concert: { title: 'LIVE-KONZERT', subtitle: 'VIP-ZUGANG', footerLeft: 'WELTTOURNEE', footerRight: 'REIHE 1' },
@@ -297,6 +302,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Chargement du classement...",
     noData: "Pas encore de données",
     time: "Temps",
+    shareScore: "Partager",
     tickets: {
       flight: { title: 'CARTE D\'EMBARQUEMENT', subtitle: 'PREMIÈRE CLASSE', footerLeft: 'PORTE 14', footerRight: 'SIÈGE 2A' },
       concert: { title: 'CONCERT LIVE', subtitle: 'ACCÈS VIP', footerLeft: 'TOURNÉE MONDIALE', footerRight: 'RANG 1' },
@@ -356,6 +362,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Carregando classificação...",
     noData: "Ainda sem dados",
     time: "Tempo",
+    shareScore: "Compartilhar",
     tickets: {
       flight: { title: 'CARTÃO DE EMBARQUE', subtitle: 'PRIMEIRA CLASSE', footerLeft: 'PORTÃO 14', footerRight: 'ASSENTO 2A' },
       concert: { title: 'CONCERTO AO VIVO', subtitle: 'ACESSO VIP', footerLeft: 'TURNÊ MUNDIAL', footerRight: 'FILA 1' },
@@ -415,6 +422,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Cargando clasificación...",
     noData: "Aún no hay datos",
     time: "Tiempo",
+    shareScore: "Compartir",
     tickets: {
       flight: { title: 'TARJETA DE EMBARQUE', subtitle: 'PRIMERA CLASSE', footerLeft: 'PUERTA 14', footerRight: 'ASIENTO 2A' },
       concert: { title: 'CONCIERTO EN VIVO', subtitle: 'ACCESO VIP', footerLeft: 'GIRA MUNDIAL', footerRight: 'FILA 1' },
@@ -474,6 +482,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "正在加载排行榜...",
     noData: "暂无数据",
     time: "时间",
+    shareScore: "分享",
     tickets: {
       flight: { title: '登机牌', subtitle: '头等舱', footerLeft: '登机口 14', footerRight: '座位 2A' },
       concert: { title: '现场演唱会', subtitle: 'VIP 通道', footerLeft: '世界巡演', footerRight: '第 1 排' },
@@ -533,6 +542,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "ランキングを読み込み中...",
     noData: "まだデータがありません",
     time: "時間",
+    shareScore: "シェア",
     tickets: {
       flight: { title: '搭乗券', subtitle: 'ファーストクラス', footerLeft: 'ゲート 14', footerRight: '座席 2A' },
       concert: { title: 'ライブコンサート', subtitle: 'VIPアクセス', footerLeft: 'ワールドツアー', footerRight: '1列目' },
@@ -592,6 +602,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Caricamento classifica...",
     noData: "Nessun dato ancora",
     time: "Tempo",
+    shareScore: "Condividi",
     tickets: {
       flight: { title: 'CARTA D\'IMBARCO', subtitle: 'PRIMA CLASSE', footerLeft: 'GATE 14', footerRight: 'POSTO 2A' },
       concert: { title: 'CONCERTO LIVE', subtitle: 'ACCESSO VIP', footerLeft: 'TOUR MONDIALE', footerRight: 'FILA 1' },
@@ -651,6 +662,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "순위표 로드 중...",
     noData: "아직 데이터가 없습니다",
     time: "시간",
+    shareScore: "공유하기",
     tickets: {
       flight: { title: '탑승권', subtitle: '일등석', footerLeft: '게이트 14', footerRight: '좌석 2A' },
       concert: { title: '라이브 콘서트', subtitle: 'VIP 입장', footerLeft: '월드 투어', footerRight: '1열' },
@@ -710,6 +722,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Liderlik tablosu yükleniyor...",
     noData: "Henüz veri yok",
     time: "Zaman",
+    shareScore: "Paylaş",
     tickets: {
       flight: { title: 'BİNİŞ KARTI', subtitle: 'BİRİNCİ SINIF', footerLeft: 'KAPI 14', footerRight: 'KOLTUK 2A' },
       concert: { title: 'CANLI KONSER', subtitle: 'VIP GİRİŞ', footerLeft: 'DÜNYA TURU', footerRight: 'SIRA 1' },
@@ -769,6 +782,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "טוען טבלת מובילים...",
     noData: "אין נתונים עדיין",
     time: "זמן",
+    shareScore: "שיתוף",
     tickets: {
       flight: { title: 'כרטיס עלייה למטוס', subtitle: 'מחלקה ראשונה', footerLeft: 'שער 14', footerRight: 'מושב 2A' },
       concert: { title: 'הופעה חיה', subtitle: 'גישת VIP', footerLeft: 'סיבוב הופעות עולמי', footerRight: 'שורה 1' },
@@ -828,6 +842,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "جاري تحميل لوحة المتصدرين...",
     noData: "لا توجد بيانات بعد",
     time: "الوقت",
+    shareScore: "مشاركة",
     tickets: {
       flight: { title: 'بطاقة صعود', subtitle: 'الدرجة الأولى', footerLeft: 'بوابة 14', footerRight: 'مقعد 2A' },
       concert: { title: 'حفل مباشر', subtitle: 'دخول VIP', footerLeft: 'جولة عالمية', footerRight: 'صف 1' },
@@ -887,6 +902,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "लीडरबोर्ड लोड हो रहा है...",
     noData: "अभी तक कोई डेटा नहीं",
     time: "समय",
+    shareScore: "साझा करें",
     tickets: {
       flight: { title: 'बोर्डिंग पास', subtitle: 'प्रथम श्रेणी', footerLeft: 'गेट 14', footerRight: 'सीट 2A' },
       concert: { title: 'लाइव कॉन्सर्ट', subtitle: 'वीआईपी एक्सेस', footerLeft: 'वर्ल्ड टूर', footerRight: 'पंक्ति 1' },
@@ -946,6 +962,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Onerans tabulam principum...",
     noData: "Nulla data adhuc",
     time: "Tempus",
+    shareScore: "Communicare",
     tickets: {
       flight: { title: 'TESSERA CONSCENDENDI', subtitle: 'PRIMA CLASSIS', footerLeft: 'PORTA 14', footerRight: 'SEDES 2A' },
       concert: { title: 'CONCENTUS VIVUS', subtitle: 'ADITUS VIP', footerLeft: 'ITER MUNDANUM', footerRight: 'ORDO 1' },
@@ -1005,6 +1022,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Ŝargante gvidtabulon...",
     noData: "Ankoraŭ neniuj datumoj",
     time: "Tempo",
+    shareScore: "Dividi",
     tickets: {
       flight: { title: 'ENIRBILETO', subtitle: 'UNUA KLASO', footerLeft: 'PORDEGO 14', footerRight: 'SEĜO 2A' },
       concert: { title: 'VIVA KONCERTO', subtitle: 'VIP-ALIRO', footerLeft: 'MONDA TURNEO', footerRight: 'VICO 1' },
@@ -1064,6 +1082,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Tulta tárië...",
     noData: "Lá quenta",
     time: "Lúmë",
+    shareScore: "Gweria",
     tickets: {
       flight: { title: 'TARMA', subtitle: 'MINYA', footerLeft: 'ANDO 14', footerRight: 'HAMA 2A' },
       concert: { title: 'LINDIË', subtitle: 'VIP', footerLeft: 'AMBAR', footerRight: 'TÉMA 1' },
@@ -1123,6 +1142,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "laSvargh lIgh...",
     noData: "De' ghobe'",
     time: "poH",
+    shareScore: "Quv",
     tickets: {
       flight: { title: 'chaw\'', subtitle: 'wa\'DIch', footerLeft: 'lojmIt 14', footerRight: 'quS 2A' },
       concert: { title: 'bom', subtitle: 'VIP', footerLeft: 'qo\'', footerRight: 'tlhegh 1' },
@@ -1182,6 +1202,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Khalasar...",
     noData: "Vos",
     time: "Atea",
+    shareScore: "Share",
     tickets: {
       flight: { title: 'TIM', subtitle: 'KHAL', footerLeft: '14', footerRight: '2A' },
       concert: { title: 'KHALASAR', subtitle: 'VIP', footerLeft: 'RHAESH', footerRight: '1' },
@@ -1241,6 +1262,7 @@ const TRANSLATIONS = {
     loadingLeaderboard: "Zaldrīzes...",
     noData: "Daor",
     time: "Sīr",
+    shareScore: "Share",
     tickets: {
       flight: { title: 'TĒMI', subtitle: 'ZALDRĪZES', footerLeft: '14', footerRight: '2A' },
       concert: { title: 'ZALDRĪZES', subtitle: 'VIP', footerLeft: 'ZALDRĪZES', footerRight: '1' },
@@ -1555,7 +1577,7 @@ function findSolution(digits: string[]): string[] | null {
   return gaps;
 }
 
-const getTicketStyles = (t: typeof TRANSLATIONS['ru']) => [
+const getTicketStyles = (t: any) => [
   {
     id: 'flight',
     containerClass: 'bg-white rounded-xl shadow-2xl border-l-[12px] border-blue-600 p-5 sm:p-6',
@@ -1916,7 +1938,7 @@ export default function App() {
   const [vibrationEnabled, setVibrationEnabled] = useState(true);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   
-  const t = TRANSLATIONS[language];
+  const t: any = TRANSLATIONS[language];
 
   useEffect(() => {
     if (!GITHUB_FOLDER_URL) return;
@@ -2393,10 +2415,15 @@ export default function App() {
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
         const tgShareScoreUrl = urlParams.get('tgShareScoreUrl') || hashParams.get('tgShareScoreUrl');
-        const tgUserId = urlParams.get('tg_user_id') || hashParams.get('tg_user_id') || urlParams.get('user_id') || hashParams.get('user_id');
+        const tgUserId = urlParams.get('userId') || hashParams.get('userId') || 
+                         urlParams.get('tg_user_id') || hashParams.get('tg_user_id') || 
+                         urlParams.get('user_id') || hashParams.get('user_id');
         const tgInitData = urlParams.get('tgWebAppStartParam') || hashParams.get('tgWebAppStartParam') || urlParams.get('hash') || hashParams.get('hash');
+        const tgGameId = urlParams.get('id') || hashParams.get('id');
+        const tgChatId = urlParams.get('chatId') || hashParams.get('chatId') ||
+                         urlParams.get('chat_id') || hashParams.get('chat_id');
         
-        if (tgShareScoreUrl || tgUserId || tgInitData) {
+        if (tgShareScoreUrl || tgUserId || tgInitData || tgGameId || tgChatId) {
           if (isMounted) {
             setTgUser({
               id: tgUserId ? Number(tgUserId) : 1,
@@ -2865,6 +2892,17 @@ export default function App() {
         >
           Open in Telegram
         </button>
+        <button 
+          onClick={() => {
+            setTgUser({
+              id: 9999,
+              first_name: "Guest",
+            });
+          }}
+          className="mt-6 text-sm opacity-60 hover:opacity-100 transition-opacity underline font-medium cursor-pointer text-[var(--tg-theme-button-color,#3b82f6)]"
+        >
+          {t.playAsGuest || "Play as guest"}
+        </button>
       </div>
     );
   }
@@ -2917,6 +2955,33 @@ export default function App() {
          </div>
 
          <div className="flex items-center gap-2">
+           <button 
+             onClick={() => { 
+               playSound('click'); 
+               playVibration('light'); 
+               const gameProxy = (window as any).TelegramGameProxy;
+               if (gameProxy && typeof gameProxy.shareScore === 'function') {
+                 gameProxy.shareScore();
+               } else {
+                 const tg = (window as any).Telegram?.WebApp;
+                 if (tg && tg.switchInlineQuery) {
+                   tg.switchInlineQuery(solvedCount.toString());
+                 } else {
+                   if (navigator.share) {
+                     navigator.share({
+                       title: 'Make100',
+                       text: `Я решил ${solvedCount} билетов в игре Make100! Попробуй побить мой рекорд!`,
+                       url: window.location.href,
+                     }).catch(console.error);
+                   }
+                 }
+               }
+             }}
+             className="p-2 rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center justify-center justify-items-center"
+             title={t.shareScore}
+           >
+             <Share2 size={24} />
+           </button>
            <button 
              onClick={() => { setIsMenuOpen(true); playSound('click'); playVibration('light'); }}
              className="p-2 rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
@@ -2997,18 +3062,46 @@ export default function App() {
                 {/* Leaderboard */}
                 <div className="flex flex-col gap-3">
                   <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.leaderboard}</span>
-                  <button 
-                    onClick={() => { 
-                      setIsMenuOpen(false); 
-                      setIsLeaderboardOpen(true); 
-                      fetchLeaderboard();
-                      playSound('click'); 
-                      playVibration('light'); 
-                    }}
-                    className="w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-md"
-                  >
-                    <Trophy size={18} /> {t.topPlayers}
-                  </button>
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <button 
+                      onClick={() => { 
+                        setIsMenuOpen(false); 
+                        setIsLeaderboardOpen(true); 
+                        fetchLeaderboard();
+                        playSound('click'); 
+                        playVibration('light'); 
+                      }}
+                      className="flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-md"
+                    >
+                      <Trophy size={18} /> {t.topPlayers}
+                    </button>
+                    <button 
+                      onClick={() => { 
+                        playSound('click'); 
+                        playVibration('light'); 
+                        const gameProxy = (window as any).TelegramGameProxy;
+                        if (gameProxy && typeof gameProxy.shareScore === 'function') {
+                          gameProxy.shareScore();
+                        } else {
+                          const tg = (window as any).Telegram?.WebApp;
+                          if (tg && tg.switchInlineQuery) {
+                            tg.switchInlineQuery(solvedCount.toString());
+                          } else {
+                            if (navigator.share) {
+                              navigator.share({
+                                title: 'Make100',
+                                text: `Я решил ${solvedCount} билетов в игре Make100! Попробуй побить мой рекорд!`,
+                                url: window.location.href,
+                              }).catch(console.error);
+                            }
+                          }
+                        }
+                      }}
+                      className="flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] shadow-md"
+                    >
+                      <Share2 size={18} /> {t.shareScore}
+                    </button>
+                  </div>
                 </div>
 
                 {/* Game Mode */}
@@ -3202,6 +3295,35 @@ export default function App() {
                     ))}
                   </div>
                 )}
+              </div>
+
+              <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 flex gap-2">
+                <button 
+                  onClick={() => { 
+                    playSound('click'); 
+                    playVibration('light'); 
+                    const gameProxy = (window as any).TelegramGameProxy;
+                    if (gameProxy && typeof gameProxy.shareScore === 'function') {
+                      gameProxy.shareScore();
+                    } else {
+                      const tg = (window as any).Telegram?.WebApp;
+                      if (tg && tg.switchInlineQuery) {
+                        tg.switchInlineQuery(solvedCount.toString());
+                      } else {
+                        if (navigator.share) {
+                          navigator.share({
+                            title: 'Make100',
+                            text: `Я решил ${solvedCount} билетов в игре Make100! Попробуй побить мой рекорд!`,
+                            url: window.location.href,
+                          }).catch(console.error);
+                        }
+                      }
+                    }
+                  }}
+                  className="w-full py-3 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 hover:-translate-y-0.5"
+                >
+                  <Share2 size={16} /> {t.shareScore}
+                </button>
               </div>
             </motion.div>
           </motion.div>
