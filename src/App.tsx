@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Smartphone, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb, Trophy, Clock, Hash, Activity, Share2 } from 'lucide-react';
+import { Plus, Minus, X, Divide, RefreshCw, Delete, Play, Moon, Sun, Smartphone, Plane, Music, Film, Train, Bus, TramFront, CableCar, Star, CreditCard, Coins, User, Menu, Volume2, VolumeX, Vibrate, VibrateOff, Lightbulb, Trophy, Clock, Hash, Activity } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { auth, db } from './firebase';
 import { signInAnonymously, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
@@ -2956,33 +2956,6 @@ export default function App() {
 
          <div className="flex items-center gap-2">
            <button 
-             onClick={() => { 
-               playSound('click'); 
-               playVibration('light'); 
-               const gameProxy = (window as any).TelegramGameProxy;
-               if (gameProxy && typeof gameProxy.shareScore === 'function') {
-                 gameProxy.shareScore();
-               } else {
-                 const tg = (window as any).Telegram?.WebApp;
-                 if (tg && tg.switchInlineQuery) {
-                   tg.switchInlineQuery(solvedCount.toString());
-                 } else {
-                   if (navigator.share) {
-                     navigator.share({
-                       title: 'Make100',
-                       text: `Я решил ${solvedCount} билетов в игре Make100! Попробуй побить мой рекорд!`,
-                       url: window.location.href,
-                     }).catch(console.error);
-                   }
-                 }
-               }
-             }}
-             className="p-2 rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center justify-center justify-items-center"
-             title={t.shareScore}
-           >
-             <Share2 size={24} />
-           </button>
-           <button 
              onClick={() => { setIsMenuOpen(true); playSound('click'); playVibration('light'); }}
              className="p-2 rounded-xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md border border-zinc-200 dark:border-zinc-800/50 text-zinc-600 dark:text-zinc-300 hover:text-zinc-900 dark:hover:text-white transition-colors"
            >
@@ -3062,46 +3035,18 @@ export default function App() {
                 {/* Leaderboard */}
                 <div className="flex flex-col gap-3">
                   <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">{t.leaderboard}</span>
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <button 
-                      onClick={() => { 
-                        setIsMenuOpen(false); 
-                        setIsLeaderboardOpen(true); 
-                        fetchLeaderboard();
-                        playSound('click'); 
-                        playVibration('light'); 
-                      }}
-                      className="flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-md"
-                    >
-                      <Trophy size={18} /> {t.topPlayers}
-                    </button>
-                    <button 
-                      onClick={() => { 
-                        playSound('click'); 
-                        playVibration('light'); 
-                        const gameProxy = (window as any).TelegramGameProxy;
-                        if (gameProxy && typeof gameProxy.shareScore === 'function') {
-                          gameProxy.shareScore();
-                        } else {
-                          const tg = (window as any).Telegram?.WebApp;
-                          if (tg && tg.switchInlineQuery) {
-                            tg.switchInlineQuery(solvedCount.toString());
-                          } else {
-                            if (navigator.share) {
-                              navigator.share({
-                                title: 'Make100',
-                                text: `Я решил ${solvedCount} билетов в игре Make100! Попробуй побить мой рекорд!`,
-                                url: window.location.href,
-                              }).catch(console.error);
-                            }
-                          }
-                        }
-                      }}
-                      className="flex-1 py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] shadow-md"
-                    >
-                      <Share2 size={18} /> {t.shareScore}
-                    </button>
-                  </div>
+                  <button 
+                    onClick={() => { 
+                      setIsMenuOpen(false); 
+                      setIsLeaderboardOpen(true); 
+                      fetchLeaderboard();
+                      playSound('click'); 
+                      playVibration('light'); 
+                    }}
+                    className="w-full py-3 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white shadow-md"
+                  >
+                    <Trophy size={18} /> {t.topPlayers}
+                  </button>
                 </div>
 
                 {/* Game Mode */}
@@ -3297,34 +3242,7 @@ export default function App() {
                 )}
               </div>
 
-              <div className="p-4 border-t border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/80 flex gap-2">
-                <button 
-                  onClick={() => { 
-                    playSound('click'); 
-                    playVibration('light'); 
-                    const gameProxy = (window as any).TelegramGameProxy;
-                    if (gameProxy && typeof gameProxy.shareScore === 'function') {
-                      gameProxy.shareScore();
-                    } else {
-                      const tg = (window as any).Telegram?.WebApp;
-                      if (tg && tg.switchInlineQuery) {
-                        tg.switchInlineQuery(solvedCount.toString());
-                      } else {
-                        if (navigator.share) {
-                          navigator.share({
-                            title: 'Make100',
-                            text: `Я решил ${solvedCount} билетов в игре Make100! Попробуй побить мой рекорд!`,
-                            url: window.location.href,
-                          }).catch(console.error);
-                        }
-                      }
-                    }
-                  }}
-                  className="w-full py-3 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] font-bold text-sm rounded-xl transition-all shadow-md flex items-center justify-center gap-2 hover:-translate-y-0.5"
-                >
-                  <Share2 size={16} /> {t.shareScore}
-                </button>
-              </div>
+
             </motion.div>
           </motion.div>
         )}
@@ -3489,22 +3407,6 @@ export default function App() {
                 <p className="text-lg text-zinc-500 dark:text-zinc-400">{t.operatorsUsed} <span className="font-mono font-bold">{gaps.join('').replace(/[0-9.]/g, '').length}</span></p>
               </div>
               <div className="flex flex-col gap-3">
-                <button 
-                  onClick={() => {
-                    if ((window as any).TelegramGameProxy) {
-                      (window as any).TelegramGameProxy.shareScore();
-                    } else if (tgUser) {
-                      // Fallback if not opened as a game proxy but as a mini app
-                      const tg = (window as any).Telegram?.WebApp;
-                      if (tg && tg.switchInlineQuery) {
-                        tg.switchInlineQuery(solvedCount.toString());
-                      }
-                    }
-                  }}
-                  className="w-full py-4 bg-[var(--tg-theme-button-color,#3b82f6)] hover:opacity-90 text-[var(--tg-theme-button-text-color,#ffffff)] font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(59,130,246,0.3)] hover:-translate-y-1"
-                >
-                  {(t as any).shareScore || "Поделиться"}
-                </button>
                 <button 
                   onClick={() => initGame(false)}
                   className="w-full py-4 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_20px_rgba(255,255,255,0.15)] hover:-translate-y-1"
