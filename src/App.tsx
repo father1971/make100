@@ -3143,7 +3143,7 @@ export default function App() {
                 </div>
 
                 <div className="mt-4 text-center text-xs text-zinc-400 dark:text-zinc-600 font-mono">
-                  v1.8
+                  v1.9
                 </div>
               </div>
             </motion.div>
