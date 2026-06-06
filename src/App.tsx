@@ -3408,6 +3408,23 @@ export default function App() {
               </div>
               <div className="flex flex-col gap-3">
                 <button 
+                  onClick={() => {
+                    const gameProxy = (window as any).TelegramGameProxy;
+                    if (gameProxy && typeof gameProxy.shareScore === 'function') {
+                      try {
+                        gameProxy.shareScore();
+                      } catch (e) {
+                        console.error("Failed to call shareScore", e);
+                      }
+                    } else {
+                      console.log("TelegramGameProxy.shareScore is not available in this environment.");
+                    }
+                  }}
+                  className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:shadow-[0_12px_25px_rgba(249,115,22,0.35)] hover:-translate-y-1 flex items-center justify-center gap-2"
+                >
+                  <span>{t.shareScore}</span>
+                </button>
+                <button 
                   onClick={() => initGame(false)}
                   className="w-full py-4 bg-zinc-900 dark:bg-white hover:bg-zinc-800 dark:hover:bg-zinc-200 text-white dark:text-zinc-900 font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_20px_rgba(255,255,255,0.15)] hover:-translate-y-1"
                 >
