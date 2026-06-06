@@ -2415,6 +2415,7 @@ export default function App() {
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
         const tgShareScoreUrl = urlParams.get('tgShareScoreUrl') || hashParams.get('tgShareScoreUrl');
+        
         const tgUserId = urlParams.get('userId') || hashParams.get('userId') || 
                          urlParams.get('tg_user_id') || hashParams.get('tg_user_id') || 
                          urlParams.get('user_id') || hashParams.get('user_id');
@@ -2680,16 +2681,26 @@ export default function App() {
   const currentResult = digits.length ? calculateResult(digits, gaps) : 0;
   const isWin = currentResult === 100;
 
-  const sendScoreToCloudflare = useCallback(async (score: number) => {
+  const sendScoreToCloudflare = useCallback(async (score: number, totalTime: number, totalOperators: number) => {
     try {
       // REPLACE /api/score WITH YOUR CLOUDFLARE WORKER URL
       // Example: 'https://your-worker-name.your-subdomain.workers.dev/score'
       const CLOUDFLARE_API_URL = '/api/score'; 
+      const tg = (window as any).Telegram?.WebApp;
+      const initData = tg?.initData || '';
       const tgParams = (window as any).TelegramGameProxy?.initParams || {};
+
+      if (tg && typeof tg.expand === 'function') {
+        tg.expand();
+      }
+
       const payload = {
-        score,
+        initData,
+        solvedCount: score,
+        totalSolveTime: totalTime,
+        totalOperatorsUsed: totalOperators,
         userId: tgUser?.id || tgParams.user_id,
-        initParams: tgParams
+        clientTimestamp: Math.floor(Date.now() / 1000)
       };
       
       const response = await fetch(CLOUDFLARE_API_URL, {
@@ -2699,9 +2710,9 @@ export default function App() {
         },
         body: JSON.stringify(payload)
       });
-      console.log('Score sent to Cloudflare API:', await response.text());
+      console.log('Score sent to Cloudflare API (Secure):', await response.text());
     } catch (e) {
-      console.error('Failed to send score via fetch', e);
+      console.error('Failed to send secure score via fetch', e);
     }
   }, [tgUser]);
 
@@ -2718,17 +2729,17 @@ export default function App() {
       const newTotalTime = totalSolveTime + elapsedTime;
       setTotalSolveTime(newTotalTime);
       
-      // Send score via fetch
-      sendScoreToCloudflare(newSolvedCount);
-      
       // Count operators used in the winning solution
       const operatorsUsed = gaps.join('').replace(/[0-9.]/g, '').length;
       const newTotalOperators = totalOperatorsUsed + operatorsUsed;
       setTotalOperatorsUsed(newTotalOperators);
       
+      // Send score via secure fetch
+      sendScoreToCloudflare(newSolvedCount, newTotalTime, newTotalOperators);
+      
       setSelectedSlot(null);
     }
-  }, [isWin, won, hintUsed, elapsedTime, gaps, playSound, playVibration, solvedCount, totalSolveTime, totalOperatorsUsed, tgUser, gameMode, digits]);
+  }, [isWin, won, hintUsed, elapsedTime, gaps, playSound, playVibration, solvedCount, totalSolveTime, totalOperatorsUsed, tgUser, gameMode, digits, sendScoreToCloudflare]);
 
   if (!digits.length) return null;
 
@@ -3409,15 +3420,44 @@ export default function App() {
               <div className="flex flex-col gap-3">
                 <button 
                   onClick={() => {
-                    const gameProxy = (window as any).TelegramGameProxy;
-                    if (gameProxy && typeof gameProxy.shareScore === 'function') {
-                      try {
-                        gameProxy.shareScore();
-                      } catch (e) {
-                        console.error("Failed to call shareScore", e);
+                    const runShare = (proxy: any) => {
+                      if (proxy && typeof proxy.shareScore === 'function') {
+                        try {
+                          proxy.shareScore();
+                        } catch (e) {
+                          console.error("Failed to call shareScore", e);
+                        }
+                      } else {
+                        console.log("TelegramGameProxy.shareScore is not available inside this proxy.");
                       }
+                    };
+
+                    const gameProxy = (window as any).TelegramGameProxy;
+                    if (gameProxy) {
+                      runShare(gameProxy);
                     } else {
-                      console.log("TelegramGameProxy.shareScore is not available in this environment.");
+                      // Dynamically load games.js script only when clicked to completely isolate loading
+                      const scriptId = 'telegram-games-script';
+                      if (!document.getElementById(scriptId)) {
+                        const script = document.createElement('script');
+                        script.id = scriptId;
+                        script.src = "https://telegram.org/js/games.js";
+                        script.async = true;
+                        script.onload = () => {
+                          const gp = (window as any).TelegramGameProxy;
+                          runShare(gp);
+                        };
+                        script.onerror = () => {
+                          console.error("Failed to load Telegram games.js dynamically");
+                        };
+                        document.head.appendChild(script);
+                      } else {
+                        // script tag is added but TelegramGameProxy is not bound yet, check via small delay
+                        setTimeout(() => {
+                          const gp = (window as any).TelegramGameProxy;
+                          runShare(gp);
+                        }, 100);
+                      }
                     }
                   }}
                   className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:shadow-[0_12px_25px_rgba(249,115,22,0.35)] hover:-translate-y-1 flex items-center justify-center gap-2"
