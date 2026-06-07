@@ -2716,6 +2716,48 @@ export default function App() {
     }
   }, [tgUser]);
 
+  const handleShareResult = useCallback(() => {
+    const runShare = (proxy: any) => {
+      if (proxy && typeof proxy.shareScore === 'function') {
+        try {
+          proxy.shareScore();
+        } catch (e) {
+          console.error("Failed to call shareScore", e);
+        }
+      } else {
+        console.log("TelegramGameProxy.shareScore is not available inside this proxy.");
+      }
+    };
+
+    const gameProxy = (window as any).TelegramGameProxy;
+    if (gameProxy) {
+      runShare(gameProxy);
+    } else {
+      // Dynamically load games.js script only when clicked to completely isolate loading
+      const scriptId = 'telegram-games-script';
+      if (!document.getElementById(scriptId)) {
+        const script = document.createElement('script');
+        script.id = scriptId;
+        script.src = "https://telegram.org/js/games.js";
+        script.async = true;
+        script.onload = () => {
+          const gp = (window as any).TelegramGameProxy;
+          runShare(gp);
+        };
+        script.onerror = () => {
+          console.error("Failed to load Telegram games.js dynamically");
+        };
+        document.head.appendChild(script);
+      } else {
+        // script tag is added but TelegramGameProxy is not bound yet, check via small delay
+        setTimeout(() => {
+          const gp = (window as any).TelegramGameProxy;
+          runShare(gp);
+        }, 100);
+      }
+    }
+  }, []);
+
   useEffect(() => {
     if (isWin && !won && !hintUsed) {
       setWon(true);
@@ -3419,47 +3461,7 @@ export default function App() {
               </div>
               <div className="flex flex-col gap-3">
                 <button 
-                  onClick={() => {
-                    const runShare = (proxy: any) => {
-                      if (proxy && typeof proxy.shareScore === 'function') {
-                        try {
-                          proxy.shareScore();
-                        } catch (e) {
-                          console.error("Failed to call shareScore", e);
-                        }
-                      } else {
-                        console.log("TelegramGameProxy.shareScore is not available inside this proxy.");
-                      }
-                    };
-
-                    const gameProxy = (window as any).TelegramGameProxy;
-                    if (gameProxy) {
-                      runShare(gameProxy);
-                    } else {
-                      // Dynamically load games.js script only when clicked to completely isolate loading
-                      const scriptId = 'telegram-games-script';
-                      if (!document.getElementById(scriptId)) {
-                        const script = document.createElement('script');
-                        script.id = scriptId;
-                        script.src = "https://telegram.org/js/games.js";
-                        script.async = true;
-                        script.onload = () => {
-                          const gp = (window as any).TelegramGameProxy;
-                          runShare(gp);
-                        };
-                        script.onerror = () => {
-                          console.error("Failed to load Telegram games.js dynamically");
-                        };
-                        document.head.appendChild(script);
-                      } else {
-                        // script tag is added but TelegramGameProxy is not bound yet, check via small delay
-                        setTimeout(() => {
-                          const gp = (window as any).TelegramGameProxy;
-                          runShare(gp);
-                        }, 100);
-                      }
-                    }
-                  }}
+                  onClick={handleShareResult}
                   className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:shadow-[0_12px_25px_rgba(249,115,22,0.35)] hover:-translate-y-1 flex items-center justify-center gap-2"
                 >
                   <span>{t.shareScore}</span>
