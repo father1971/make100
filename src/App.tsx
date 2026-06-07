@@ -2414,7 +2414,8 @@ export default function App() {
         // 2. Try URL query and hash parameters direct fallback (super robust detecting game/bot launch params)
         const urlParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.slice(1));
-        const tgShareScoreUrl = urlParams.get('tgShareScoreUrl') || hashParams.get('tgShareScoreUrl');
+        const tgShareScoreUrl = urlParams.get('tgShareScoreUrl') || hashParams.get('tgShareScoreUrl') || 
+                               window.sessionStorage.getItem('tgShareScoreUrl') || (window as any).__tgShareScoreUrl;
         
         const tgUserId = urlParams.get('userId') || hashParams.get('userId') || 
                          urlParams.get('tg_user_id') || hashParams.get('tg_user_id') || 
@@ -2729,9 +2730,21 @@ export default function App() {
       }
     };
 
+    const restoreParamsAndShare = (proxy: any) => {
+      if (proxy) {
+        if (!proxy.initParams) {
+          proxy.initParams = {};
+        }
+        if (!proxy.initParams.tgShareScoreUrl) {
+          proxy.initParams.tgShareScoreUrl = window.sessionStorage.getItem('tgShareScoreUrl') || (window as any).__tgShareScoreUrl || '';
+        }
+      }
+      runShare(proxy);
+    };
+
     const gameProxy = (window as any).TelegramGameProxy;
     if (gameProxy) {
-      runShare(gameProxy);
+      restoreParamsAndShare(gameProxy);
     } else {
       // Dynamically load games.js script only when clicked to completely isolate loading
       const scriptId = 'telegram-games-script';
@@ -2742,7 +2755,7 @@ export default function App() {
         script.async = true;
         script.onload = () => {
           const gp = (window as any).TelegramGameProxy;
-          runShare(gp);
+          restoreParamsAndShare(gp);
         };
         script.onerror = () => {
           console.error("Failed to load Telegram games.js dynamically");
@@ -2752,7 +2765,7 @@ export default function App() {
         // script tag is added but TelegramGameProxy is not bound yet, check via small delay
         setTimeout(() => {
           const gp = (window as any).TelegramGameProxy;
-          runShare(gp);
+          restoreParamsAndShare(gp);
         }, 100);
       }
     }
