@@ -8,37 +8,6 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Lucky Ticket</title>
-    <script>
-      // Immediately parse and clean tgShareScoreUrl to prevent Telegram from auto-triggering the share popup on startup
-      (function() {
-        try {
-          var href = window.location.href;
-          var match = href.match(/[?#&]tgShareScoreUrl=([^&]+)/);
-          if (match) {
-            var val = decodeURIComponent(match[1]);
-            window.sessionStorage.setItem('tgShareScoreUrl', val);
-            window.__tgShareScoreUrl = val;
-            
-            // Clean the parameter completely from the URL
-            var cleanedHref = href.replace(/([?#&])tgShareScoreUrl=[^&]+&?/, '$1');
-            
-            // Clean trailing query/hash characters or orphaned symbol separators
-            cleanedHref = cleanedHref.replace(/[?#&]$/, '').replace(/([?#])&/, '$1');
-            
-            if (cleanedHref !== href) {
-              window.location.replace(cleanedHref);
-              if (typeof window.stop === 'function') {
-                window.stop();
-              }
-              document.write('<!--');
-              throw new Error("Redirecting to clean URL...");
-            }
-          }
-        } catch (e) {
-          console.error("Error sanitizing URL parameters:", e);
-        }
-      })();
-    </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script>
       window.process = window.process || { env: {} };
