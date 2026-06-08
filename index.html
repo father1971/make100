@@ -27,6 +27,11 @@
             
             if (cleanedHref !== href) {
               window.location.replace(cleanedHref);
+              if (typeof window.stop === 'function') {
+                window.stop();
+              }
+              document.write('<!--');
+              throw new Error("Redirecting to clean URL...");
             }
           }
         } catch (e) {
@@ -35,7 +40,6 @@
       })();
     </script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://telegram.org/js/games.js"></script>
     <script>
       window.process = window.process || { env: {} };
     </script>

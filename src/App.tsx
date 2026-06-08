@@ -3474,7 +3474,7 @@ export default function App() {
               </div>
               <div className="flex flex-col gap-3">
                 <button 
-                  onClick={handleShareResult}
+                  onClick={() => handleShareResult()}
                   className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black text-xl rounded-2xl transition-all shadow-[0_8px_20px_rgba(249,115,22,0.25)] hover:shadow-[0_12px_25px_rgba(249,115,22,0.35)] hover:-translate-y-1 flex items-center justify-center gap-2"
                 >
                   <span>{t.shareScore}</span>
